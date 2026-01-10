@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Dashboard from '@/components/Dashboard';
 import AddStack from '@/components/AddStack';
 import PeptideList from '@/components/PeptideList';
@@ -11,11 +11,18 @@ import CommunityView from '@/components/CommunityView';
 import Settings from '@/components/Settings';
 import Navigation from '@/components/Navigation';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
+import { startMissedDoseChecker } from '@/lib/notifications';
 import type { ViewMode } from '@/types';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   const [protocolKey, setProtocolKey] = useState(0);
+
+  // Start client-side notification checker
+  useEffect(() => {
+    const cleanup = startMissedDoseChecker();
+    return cleanup;
+  }, []);
 
   // Wrapper to track view changes and increment protocol key when navigating to it
   const handleViewChange = useCallback((newView: ViewMode) => {
