@@ -16,7 +16,7 @@ export async function GET(
     const sortBy = searchParams.get('sortBy') || 'helpful_votes';
 
     // Build orderBy clause
-    let orderBy: any = { helpfulVotes: 'desc' };
+    let orderBy: { helpfulVotes?: 'desc'; createdAt?: 'desc'; effectivenessRating?: 'desc' } = { helpfulVotes: 'desc' };
     if (sortBy === 'created_at') {
       orderBy = { createdAt: 'desc' };
     } else if (sortBy === 'effectiveness_rating') {

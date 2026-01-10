@@ -133,7 +133,7 @@ export function checkMissedDoses(doseLogs: DoseLog[]): SafetyCheck[] {
   const missedLogs = doseLogs.filter(log => {
     const scheduleDate = new Date(log.scheduledDate);
     scheduleDate.setHours(0, 0, 0, 0);
-    return scheduleDate < now && log.status === 'scheduled';
+    return scheduleDate < now && log.status === 'pending';
   });
 
   if (missedLogs.length > 0) {

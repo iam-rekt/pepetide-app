@@ -98,7 +98,7 @@ export default function ProtocolBuilder({ onComplete }: ProtocolBuilderProps) {
             targetDose: parseFloat(targetDose),
             doseUnit: targetDoseUnit,
             volumeInjected: volumePerDose,
-            status: 'scheduled',
+            status: 'pending',
           })
         );
       }

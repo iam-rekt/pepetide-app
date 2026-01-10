@@ -112,7 +112,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
             targetDose: parseFloat(targetDose),
             doseUnit: targetDoseUnit,
             volumeInjected: volumePerDose,
-            status: 'scheduled',
+            status: 'pending',
           })
         );
       }

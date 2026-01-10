@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       : {};
 
     // Build orderBy clause
-    let orderBy: any = { upvotes: 'desc' };
+    let orderBy: { upvotes?: 'desc'; createdAt?: 'desc'; name?: 'asc' } = { upvotes: 'desc' };
     if (sortBy === 'created_at') {
       orderBy = { createdAt: 'desc' };
     } else if (sortBy === 'name') {

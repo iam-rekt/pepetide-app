@@ -12,7 +12,7 @@ async function sendTelegramMessage(chatId: string, text: string) {
     });
 }
 
-export async function GET(request: Request) {
+export async function GET() {
     // Verify cron secret if needed (omitted for simple MVP)
 
     try {
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 
         const missedLogs = await prisma.syncedLog.findMany({
             where: {
-                status: 'scheduled',
+                status: 'pending',
                 scheduledDate: {
                     lt: now,
                     gt: windowStart

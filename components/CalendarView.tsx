@@ -59,7 +59,7 @@ export default function CalendarView() {
 
   // Toggle dose status
   const toggleDoseStatus = async (log: DoseLog) => {
-    const newStatus = log.status === 'taken' ? 'scheduled' : 'taken';
+    const newStatus = log.status === 'taken' ? 'pending' : 'taken';
     const actualDate = newStatus === 'taken' ? new Date() : undefined;
 
     await updateDoseLog(log.id, {

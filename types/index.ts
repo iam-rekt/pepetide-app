@@ -72,7 +72,7 @@ export interface DoseLog {
   doseUnit: 'mcg' | 'mg';
   volumeInjected?: number; // in mL
   injectionSite?: string;
-  status: 'scheduled' | 'taken' | 'missed' | 'skipped';
+  status: 'pending' | 'taken' | 'skipped';
   notes?: string;
   createdAt: Date;
   updatedAt: Date;

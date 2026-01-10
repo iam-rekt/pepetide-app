@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import Dashboard from '@/components/Dashboard';
 import AddStack from '@/components/AddStack';
 import PeptideList from '@/components/PeptideList';
@@ -15,12 +15,12 @@ import type { ViewMode } from '@/types';
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
-  const protocolKeyRef = useRef(0);
+  const [protocolKey, setProtocolKey] = useState(0);
 
   // Wrapper to track view changes and increment protocol key when navigating to it
   const handleViewChange = useCallback((newView: ViewMode) => {
     if (newView === 'protocol') {
-      protocolKeyRef.current += 1;
+      setProtocolKey(prev => prev + 1);
     }
     setCurrentView(newView);
   }, []);
@@ -43,7 +43,7 @@ export default function Home() {
           {currentView === 'dashboard' && <Dashboard key="dashboard" onNavigate={handleViewChange} />}
           {currentView === 'add-stack' && <AddStack key="add-stack" onBack={() => handleViewChange('dashboard')} onComplete={() => handleViewChange('dashboard')} />}
           {currentView === 'my-list' && <PeptideList key="my-list" onNavigate={handleViewChange} />}
-          {currentView === 'protocol' && <ProtocolBuilder key={`protocol-${protocolKeyRef.current}`} onComplete={() => handleViewChange('calendar')} />}
+          {currentView === 'protocol' && <ProtocolBuilder key={`protocol-${protocolKey}`} onComplete={() => handleViewChange('calendar')} />}
           {currentView === 'calculator' && <Calculator key="calculator" />}
           {currentView === 'calendar' && <CalendarView key="calendar" />}
           {currentView === 'community' && <CommunityView key="community" />}
