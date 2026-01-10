@@ -1,0 +1,98 @@
+// This is your Prisma schema file
+// https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Community Peptide - main peptide entries shared by users
+model CommunityPeptide {
+  id                       String   @id @default(cuid())
+  name                     String   @unique
+  description              String?
+  submittedBy              String   @map("submitted_by")
+  submissionCount          Int      @default(1) @map("submission_count")
+  commonDosageMin          Float?   @map("common_dosage_min")
+  commonDosageMax          Float?   @map("common_dosage_max")
+  commonDosageUnit         String?  @map("common_dosage_unit")
+  benefits                 String[] @default([])
+  contraindications        String[] @default([])
+  warnings                 String[] @default([])
+  storageInstructions      String?  @map("storage_instructions")
+  unreconstitutedShelfLife String?  @map("unreconstituted_shelf_life")
+  reconstitutedShelfLife   String?  @map("reconstituted_shelf_life")
+  upvotes                  Int      @default(0)
+  downvotes                Int      @default(0)
+  createdAt                DateTime @default(now()) @map("created_at")
+  updatedAt                DateTime @updatedAt @map("updated_at")
+
+  submissions PeptideSubmission[]
+  reviews     UserReview[]
+  votes       PeptideVote[]
+
+  @@map("community_peptides")
+}
+
+// Peptide Submission - individual user submissions
+model PeptideSubmission {
+  id                   String   @id @default(cuid())
+  peptideName          String   @map("peptide_name")
+  submittedBy          String   @map("submitted_by")
+  description          String?
+  dosageMin            Float?   @map("dosage_min")
+  dosageMax            Float?   @map("dosage_max")
+  dosageUnit           String?  @map("dosage_unit")
+  benefits             String[] @default([])
+  contraindications    String[] @default([])
+  warnings             String[] @default([])
+  notes                String?
+  source               String?
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  communityPeptide   CommunityPeptide? @relation(fields: [communityPeptideId], references: [id])
+  communityPeptideId String?           @map("community_peptide_id")
+
+  @@map("peptide_submissions")
+}
+
+// User Review - reviews and experiences from users
+model UserReview {
+  id                   String   @id @default(cuid())
+  peptideName          String   @map("peptide_name")
+  username             String
+  dosageUsed           Float?   @map("dosage_used")
+  dosageUnit           String?  @map("dosage_unit")
+  frequency            String?
+  durationWeeks        Int?     @map("duration_weeks")
+  benefitsExperienced  String[] @default([]) @map("benefits_experienced")
+  sideEffects          String[] @default([]) @map("side_effects")
+  effectivenessRating  Int?     @map("effectiveness_rating")
+  notes                String?
+  helpfulVotes         Int      @default(0) @map("helpful_votes")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  communityPeptide   CommunityPeptide? @relation(fields: [communityPeptideId], references: [id])
+  communityPeptideId String?           @map("community_peptide_id")
+
+  @@map("user_reviews")
+}
+
+// Peptide Vote - track user votes
+model PeptideVote {
+  id             String   @id @default(cuid())
+  peptideId      String   @map("peptide_id")
+  userIdentifier String   @map("user_identifier")
+  voteType       String   @map("vote_type")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  communityPeptide CommunityPeptide @relation(fields: [peptideId], references: [id])
+
+  @@unique([peptideId, userIdentifier])
+  @@map("peptide_votes")
+}

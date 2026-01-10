@@ -1,0 +1,98 @@
+{
+  "name": "PEPEtide - Peptide Protocol Tracker",
+  "short_name": "PEPEtide",
+  "description": "Track your peptide protocols with precision and safety",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "any",
+  "categories": [
+    "health",
+    "fitness",
+    "medical",
+    "lifestyle"
+  ],
+  "lang": "en-US",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/pwaicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwaicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/pwaicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwaicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/hero-pepe.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "form_factor": "wide",
+      "label": "PEPEtide Dashboard"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add New Stack",
+      "short_name": "Add Stack",
+      "description": "Create a new peptide stack",
+      "url": "/?view=add-stack",
+      "icons": [
+        {
+          "src": "/pwaicon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Calculator",
+      "short_name": "Calc",
+      "description": "Open dosing calculator",
+      "url": "/?view=calculator",
+      "icons": [
+        {
+          "src": "/pwaicon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Calendar",
+      "short_name": "Calendar",
+      "description": "View dose calendar",
+      "url": "/?view=calendar",
+      "icons": [
+        {
+          "src": "/pwaicon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
