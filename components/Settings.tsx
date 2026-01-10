@@ -79,20 +79,37 @@ export default function Settings() {
         setLoading(true);
         try {
             // 1. Create or get User ID
-            let userId = localStorage.getItem('pepetide_user_id');
+            let userId: string | null = localStorage.getItem('pepetide_user_id');
+
             if (!userId) {
                 // Create new user
+                console.log('Creating new user...');
                 const res = await fetch('/api/user/create', { method: 'POST' });
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    console.error('Failed to create user:', res.status, errorText);
+                    throw new Error(`Failed to create user: ${res.status}`);
+                }
+
                 const data = await res.json();
-                userId = data.userId;
-                localStorage.setItem('pepetide_user_id', userId!);
+                console.log('User created:', data);
+
+                if (!data.userId || typeof data.userId !== 'string') {
+                    throw new Error('No valid userId returned from API');
+                }
+
+                userId = data.userId as string;
+                localStorage.setItem('pepetide_user_id', userId);
             }
 
+            // TypeScript now knows userId is definitely a string here
+            console.log('Using userId:', userId);
             setTelegramCode(userId);
             setTelegramEnabled(true);
         } catch (e) {
-            console.error(e);
-            alert('Failed to initialize connection');
+            console.error('Telegram connection error:', e);
+            alert(`Failed to initialize connection: ${e instanceof Error ? e.message : 'Unknown error'}\n\nCheck the browser console for details.`);
         } finally {
             setLoading(false);
         }
