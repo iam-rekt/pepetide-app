@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar, Plus, ArrowLeft, Check, Zap, Info } from 'lucide-react';
 import { getPeptides, getActiveVials, addProtocol, addDoseLog } from '@/lib/db';
+import { syncData } from '@/lib/sync';
 import type { Peptide, PeptideVial } from '@/types';
 import { addDays, startOfToday } from 'date-fns';
 
@@ -117,6 +118,9 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
       }
 
       await Promise.all(doseLogs);
+
+      // Trigger sync
+      syncData();
 
       alert(`Protocol created with ${doseLogs.length} doses scheduled!`);
       onComplete();

@@ -96,3 +96,58 @@ model PeptideVote {
   @@unique([peptideId, userIdentifier])
   @@map("peptide_votes")
 }
+
+// User Settings & Sync
+model User {
+  id                String   @id @default(cuid())
+  telegramChatId    String?  @unique @map("telegram_chat_id")
+  telegramUsername  String?  @map("telegram_username")
+  pushSubscription  Json?    @map("push_subscription")
+  timezone          String   @default("UTC")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  syncedProtocols   SyncedProtocol[]
+
+  @@map("users")
+}
+
+model SyncedProtocol {
+  id             String   @id @default(cuid())
+  userId         String   @map("user_id")
+  localId        String   @map("local_id") // ID in IndexedDB
+  peptideName    String   @map("peptide_name")
+  otherPeptides  String[] @map("other_peptides") // For stacks
+  description    String?
+  startDate      DateTime @map("start_date")
+  endDate        DateTime? @map("end_date")
+  frequency      String   // e.g., "daily", "EOD", "3x/week"
+  doseAmount     Float    @map("dose_amount")
+  doseUnit       String   @map("dose_unit")
+  timeOfDay      String   @map("time_of_day")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs           SyncedLog[]
+
+  @@unique([userId, localId])
+  @@map("synced_protocols")
+}
+
+model SyncedLog {
+  id               String   @id @default(cuid())
+  syncedProtocolId String   @map("synced_protocol_id")
+  localId          String   @map("local_id") // ID in IndexedDB
+  scheduledDate    DateTime @map("scheduled_date")
+  status           String   // 'pending', 'taken', 'skipped'
+  takenAt          DateTime? @map("taken_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  protocol         SyncedProtocol @relation(fields: [syncedProtocolId], references: [id], onDelete: Cascade)
+
+  @@unique([syncedProtocolId, localId])
+  @@map("synced_logs")
+}

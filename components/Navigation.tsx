@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calculator, Calendar, Clock, Users, Sparkles, List } from 'lucide-react';
+import { Home, Calculator, Calendar, Clock, Users, Sparkles, List, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ViewMode } from '@/types';
 
@@ -18,6 +18,7 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     { id: 'calculator' as ViewMode, label: 'Calc', icon: Calculator },
     { id: 'calendar' as ViewMode, label: 'Calendar', icon: Calendar },
     { id: 'community' as ViewMode, label: 'Community', icon: Users },
+    { id: 'settings' as ViewMode, label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -36,8 +37,8 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
               size="sm"
               onClick={() => onViewChange(item.id)}
               className={`flex items-center gap-2 backdrop-blur-md ${isActive
-                  ? 'bg-slate-900/90 dark:bg-white/90 border-slate-700 dark:border-slate-300'
-                  : 'bg-white/70 dark:bg-slate-900/70 border-slate-300 dark:border-slate-700'
+                ? 'bg-slate-900/90 dark:bg-white/90 border-slate-700 dark:border-slate-300'
+                : 'bg-white/70 dark:bg-slate-900/70 border-slate-300 dark:border-slate-700'
                 } ${isHighlight && !isActive
                   ? 'border-cyan-300 dark:border-cyan-700 hover:bg-white/80 dark:hover:bg-slate-900/80'
                   : ''
@@ -66,12 +67,12 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
                 key={item.id}
                 onClick={() => onViewChange(item.id)}
                 className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg min-w-[44px] flex-1 transition-all ${isActive
-                    ? isHighlight
-                      ? 'text-white bg-gradient-to-r from-cyan-500 to-blue-600'
-                      : 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/50'
-                    : isHighlight
-                      ? 'text-cyan-600 dark:text-cyan-400'
-                      : 'text-slate-500 dark:text-slate-400'
+                  ? isHighlight
+                    ? 'text-white bg-gradient-to-r from-cyan-500 to-blue-600'
+                    : 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/50'
+                  : isHighlight
+                    ? 'text-cyan-600 dark:text-cyan-400'
+                    : 'text-slate-500 dark:text-slate-400'
                   }`}
               >
                 <Icon className="w-5 h-5" />

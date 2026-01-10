@@ -8,6 +8,7 @@ import Calculator from '@/components/Calculator';
 import CalendarView from '@/components/CalendarView';
 import ProtocolBuilder from '@/components/ProtocolBuilder';
 import CommunityView from '@/components/CommunityView';
+import Settings from '@/components/Settings';
 import Navigation from '@/components/Navigation';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import type { ViewMode } from '@/types';
@@ -46,6 +47,7 @@ export default function Home() {
           {currentView === 'calculator' && <Calculator key="calculator" />}
           {currentView === 'calendar' && <CalendarView key="calendar" />}
           {currentView === 'community' && <CommunityView key="community" />}
+          {currentView === 'settings' && <Settings key="settings" />}
         </main>
       </div>
 

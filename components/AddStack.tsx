@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, ArrowRight, Check, Sparkles, Beaker, Calendar as CalendarIcon } from 'lucide-react';
 import { addPeptide, addVial } from '@/lib/db';
+import { syncData } from '@/lib/sync';
 import { calculateExpirationDate } from '@/lib/calculator';
 import { format } from 'date-fns';
 
@@ -90,6 +91,9 @@ export default function AddStack({ onBack, onComplete }: AddStackProps) {
         batchNumber: batchNumber || undefined,
         isActive: true,
       });
+
+      // Trigger sync
+      syncData();
 
       setStep('summary');
     } catch (error) {

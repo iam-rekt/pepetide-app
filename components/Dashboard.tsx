@@ -9,6 +9,7 @@ import {
   Calendar, Calculator, ArrowRight, Zap
 } from 'lucide-react';
 import { getPeptides, getActiveVials, getActiveProtocols, getDoseLogs } from '@/lib/db';
+import { syncData } from '@/lib/sync';
 import { getAllSafetyChecks } from '@/lib/safety';
 import type { Peptide, PeptideVial, DoseProtocol, DoseLog, ViewMode, SafetyCheck } from '@/types';
 import { format } from 'date-fns';

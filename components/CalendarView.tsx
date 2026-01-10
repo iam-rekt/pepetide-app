@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, CheckCircle2, Circle, XCircle } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfToday } from 'date-fns';
 import { getDoseLogs, getPeptides, updateDoseLog } from '@/lib/db';
+import { syncData } from '@/lib/sync';
 import type { DoseLog, Peptide } from '@/types';
 
 export default function CalendarView() {
@@ -66,8 +67,11 @@ export default function CalendarView() {
       actualDate,
     });
 
+
+
     // Reload data
-    loadData();
+    await loadData();
+    syncData();
   };
 
   const selectedDateLogs = selectedDate ? getLogsForDate(selectedDate) : [];
@@ -212,8 +216,8 @@ export default function CalendarView() {
                 <div
                   key={log.id}
                   className={`p-3 rounded-lg border-2 transition-all ${log.status === 'taken'
-                      ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
-                      : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                    ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
+                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
                     }`}
                 >
                   <div className="flex items-start justify-between mb-2">
