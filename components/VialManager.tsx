@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Beaker, Plus, Trash2 } from 'lucide-react';
 import { getPeptides, addVial, getVials, deleteVial } from '@/lib/db';
+import { syncData } from '@/lib/sync';
 import { calculateExpirationDate, getRecommendedBacteriostaticWater } from '@/lib/calculator';
 import type { Peptide, PeptideVial } from '@/types';
 import { format } from 'date-fns';
@@ -96,6 +97,9 @@ export default function VialManager({ onComplete }: VialManagerProps) {
 
     await deleteVial(vialId);
     await loadData();
+
+    // Trigger sync to update calendar
+    syncData();
   };
 
   return (

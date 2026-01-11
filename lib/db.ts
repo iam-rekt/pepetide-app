@@ -92,6 +92,16 @@ export async function updatePeptide(id: string, updates: Partial<Peptide>) {
 
 export async function deletePeptide(id: string) {
   const db = await getDB();
+
+  // Get all vials for this peptide
+  const vials = await db.getAllFromIndex('vials', 'by-peptide', id);
+
+  // Delete all related vials (which will cascade to protocols and dose logs)
+  for (const vial of vials) {
+    await deleteVial(vial.id);
+  }
+
+  // Delete the peptide
   await db.delete('peptides', id);
 }
 
@@ -171,6 +181,25 @@ export async function updateVial(id: string, updates: Partial<PeptideVial>) {
 
 export async function deleteVial(id: string) {
   const db = await getDB();
+
+  // Get all protocols for this vial
+  const protocols = await db.getAllFromIndex('protocols', 'by-vial', id);
+
+  // Delete all related protocols and their dose logs
+  for (const protocol of protocols) {
+    // Get all dose logs for this protocol
+    const doseLogs = await db.getAllFromIndex('doseLogs', 'by-protocol', protocol.id);
+
+    // Delete all dose logs
+    for (const log of doseLogs) {
+      await db.delete('doseLogs', log.id);
+    }
+
+    // Delete the protocol
+    await db.delete('protocols', protocol.id);
+  }
+
+  // Delete the vial
   await db.delete('vials', id);
 }
 
@@ -212,6 +241,16 @@ export async function updateProtocol(id: string, updates: Partial<DoseProtocol>)
 
 export async function deleteProtocol(id: string) {
   const db = await getDB();
+
+  // Get all dose logs for this protocol
+  const doseLogs = await db.getAllFromIndex('doseLogs', 'by-protocol', id);
+
+  // Delete all dose logs
+  for (const log of doseLogs) {
+    await db.delete('doseLogs', log.id);
+  }
+
+  // Delete the protocol
   await db.delete('protocols', id);
 }
 

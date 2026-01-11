@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Beaker, Edit2, Trash2, Save, X, Plus, AlertTriangle } from 'lucide-react';
 import { getPeptides, getVialsByPeptide, updatePeptide, deletePeptide } from '@/lib/db';
+import { syncData } from '@/lib/sync';
 import type { Peptide, ViewMode } from '@/types';
 
 interface PeptideListProps {
@@ -96,6 +97,9 @@ export default function PeptideList({ onNavigate }: PeptideListProps) {
       await deletePeptide(id);
       await loadPeptides();
       setDeletingId(null);
+
+      // Trigger sync to update calendar
+      syncData();
     } catch (error) {
       console.error('Error deleting peptide:', error);
       alert('Failed to delete peptide');
