@@ -34,12 +34,16 @@ export async function POST(request: Request) {
                 if (parts.length > 1) {
                     const userId = parts[1];
 
+                    console.log(`[Telegram] Attempting to link userId: ${userId} with chatId: ${chatId}`);
+
                     // Verify user exists
                     const user = await prisma.user.findUnique({
                         where: { id: userId }
                     });
 
                     if (user) {
+                        console.log(`[Telegram] User found, updating with chatId: ${chatId}`);
+
                         // Update user with Telegram info
                         await prisma.user.update({
                             where: { id: userId },
@@ -51,7 +55,8 @@ export async function POST(request: Request) {
 
                         await sendTelegramMessage(chatId, "✅ Successfully connected to PEPEtide!\n\nYou will now receive reminders for your missed peptide doses.");
                     } else {
-                        await sendTelegramMessage(chatId, "❌ Invalid connection code. Please try linking again from the app settings.");
+                        console.error(`[Telegram] User not found for userId: ${userId}`);
+                        await sendTelegramMessage(chatId, `❌ Invalid connection code.\n\nPlease try linking again from the app settings.\n\nDebug: User ID ${userId.substring(0, 8)}... not found in database.`);
                     }
                 } else {
                     await sendTelegramMessage(chatId, "Welcome to PEPEtide Bot! 🐸\n\nPlease use the link from the app settings to connect your account.");
