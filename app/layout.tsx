@@ -19,10 +19,13 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://pepetide.xyz"),
   icons: {
     icon: [
-      { url: "/pwaicon.png", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: "/pwaicon.png",
-    shortcut: "/pwaicon.png",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/icon-192.png",
   },
   openGraph: {
     title: "PEPEtide - Peptide Protocol Tracker",
@@ -80,13 +83,13 @@ export default function RootLayout({
 
         {/* PWA Links */}
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" type="image/png" href="/pwaicon.png" />
-        <link rel="apple-touch-icon" href="/pwaicon.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/pwaicon.png" />
-        <link rel="apple-touch-icon" sizes="512x512" href="/pwaicon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/apple-touch-icon.png" />
 
         {/* Splash screens for iOS */}
-        <link rel="apple-touch-startup-image" href="/pwaicon.png" />
+        <link rel="apple-touch-startup-image" href="/icon-512.png" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
