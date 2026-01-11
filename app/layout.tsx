@@ -23,7 +23,7 @@ export const metadata: Metadata = {
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "192x192", type: "image/png" },
+      { url: "/apple-touch-icon-180.png", sizes: "180x180", type: "image/png" },
     ],
     shortcut: "/icon-192.png",
   },
@@ -85,8 +85,8 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        <link rel="apple-touch-icon" sizes="192x192" href="/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon-180.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
 
         {/* Splash screens for iOS */}
         <link rel="apple-touch-startup-image" href="/icon-512.png" />
