@@ -27,12 +27,16 @@ export async function checkMissedDoses() {
                     minute: '2-digit'
                 });
 
+                // Browser notification
                 new Notification(`Missed Dose: ${dose.peptideName}`, {
                     body: `You were scheduled to take this around ${timeStr}. Don't forget to log it!`,
                     icon: '/pwaicon.png',
                     tag: `dose-${dose.id}`,
                     requireInteraction: true,
                 });
+
+                // Also send Telegram notification if user is connected
+                sendTelegramNotification(dose.peptideName, new Date(dose.scheduledDate));
             }
         }
 
