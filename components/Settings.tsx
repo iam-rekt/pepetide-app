@@ -193,8 +193,8 @@ export default function Settings() {
                                     <ol className="list-decimal list-inside space-y-2 text-blue-800 dark:text-blue-200">
                                         <li>
                                             Open Telegram and find
-                                            <a href={`https://t.me/PeptideTrackBot?start=${telegramCode}`} target="_blank" rel="noreferrer" className="font-bold underline ml-1">
-                                                @PeptideTrackBot
+                                            <a href={`https://t.me/Pepetidebot?start=${telegramCode}`} target="_blank" rel="noreferrer" className="font-bold underline ml-1">
+                                                @Pepetidebot
                                             </a>
                                         </li>
                                         <li>Click <strong>Start</strong> or send the command:</li>
