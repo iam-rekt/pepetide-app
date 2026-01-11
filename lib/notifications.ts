@@ -1,6 +1,13 @@
 import { getDoseLogs } from './db';
 
 /**
+ * Escape special characters for Telegram MarkdownV2
+ */
+function escapeMarkdown(text: string): string {
+    return text.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
+/**
  * Client-side notification checker
  * Runs when the app is open to check for missed doses
  */
@@ -36,7 +43,8 @@ export async function checkMissedDoses() {
                 });
 
                 // Also send Telegram notification if user is connected
-                sendTelegramNotification(dose.peptideName, new Date(dose.scheduledDate));
+                sendTelegramNotification(dose.peptideName, new Date(dose.scheduledDate))
+                    .catch(err => console.error('Telegram notification failed:', err));
             }
         }
 
@@ -72,13 +80,24 @@ export async function sendTelegramNotification(peptideName: string, scheduledTim
 
     try {
         const timeStr = scheduledTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = scheduledTime.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+        // Format message with MarkdownV2 and emojis
+        const message = `
+⚠️ *Missed Dose Alert*
+
+💊 *Peptide:* ${escapeMarkdown(peptideName)}
+🕐 *Scheduled:* ${escapeMarkdown(`${dateStr} at ${timeStr}`)}
+
+Don't forget to log it\\!
+        `.trim();
 
         await fetch('/api/telegram/notify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 userId,
-                message: `⚠️ Missed Dose Alert\n\nYou were scheduled to take ${peptideName} around ${timeStr}.\n\nDon't forget to log it!`
+                message
             })
         });
     } catch (error) {

@@ -12,8 +12,17 @@ async function sendTelegramMessage(chatId: string, text: string) {
         const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text }),
+            body: JSON.stringify({
+                chat_id: chatId,
+                text,
+                parse_mode: 'MarkdownV2'
+            }),
         });
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error('Telegram API error:', error);
+        }
 
         return response.ok;
     } catch (error) {

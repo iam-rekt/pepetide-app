@@ -1,0 +1,1482 @@
+'use server'
+
+import { prisma } from "@/lib/prisma"
+import { formatCurrency } from "@/lib/utils"
+import { sendEmail } from "@/lib/email"
+import { OrderPlacedEmail } from "@/components/emails/OrderPlacedEmail"
+import { OrderConfirmedEmail } from "@/components/emails/OrderConfirmedEmail"
+import { OrderShippedEmail } from "@/components/emails/OrderShippedEmail"
+import { OrderRefundedEmail } from "@/components/emails/OrderRefundedEmail"
+import { AdminNewOrderEmail } from "@/components/emails/AdminNewOrderEmail"
+import { createNowPaymentsInvoice } from "@/lib/nowpayments"
+import { resolveProductImagePath } from "@/lib/product-image"
+import { pingIndexNow } from "@/lib/seo"
+import * as React from 'react'
+
+export type ProductWithNumberPrice = {
+    id: string
+    slug: string | null
+    name: string
+    description: string
+    price: number
+    image: string | null
+    coaUrl: string | null
+    casNumber: string | null
+    category: string
+    stock: number
+    createdAt: string
+    updatedAt: string
+}
+
+export type PaginatedProducts = {
+    products: ProductWithNumberPrice[]
+    pagination: {
+        total: number
+        pages: number
+        current: number
+        limit: number
+    }
+}
+
+function isMissingCoaColumnError(e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return msg.includes("Product.coaUrl") && msg.includes("does not exist")
+}
+
+function isMissingSlugColumnError(e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return msg.includes("Product.slug") && msg.includes("does not exist")
+}
+
+function isMissingCasNumberError(e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return msg.includes("Product.casNumber") && msg.includes("does not exist")
+}
+
+function slugify(input: string) {
+    return input
+        .toLowerCase()
+        .trim()
+        .replace(/&/g, " and ")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 70) // keep slugs reasonably short
+}
+
+async function ensureUniqueProductSlug(base: string, excludeId?: string) {
+    const cleanedBase = slugify(base) || "product"
+
+    // Try base, then base-2, base-3, ...
+    for (let i = 0; i < 50; i++) {
+        const candidate = i === 0 ? cleanedBase : `${cleanedBase}-${i + 1}`
+        const exists = await prisma.product.findFirst({
+            where: {
+                slug: candidate,
+                ...(excludeId ? { NOT: { id: excludeId } } : {}),
+            } as any,
+            select: { id: true } as any
+        })
+        if (!exists) return candidate
+    }
+    // Fallback – extremely unlikely
+    return `${cleanedBase}-${Date.now()}`
+}
+
+export async function getProducts(page: number = 1, limit: number = 12, search?: string): Promise<PaginatedProducts> {
+    try {
+        const skip = (page - 1) * limit
+
+        let products: any[] = []
+        let total = 0
+
+        const where: any = search ? {
+            OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+                { category: { contains: search, mode: 'insensitive' } },
+            ]
+        } : {}
+
+        try {
+            ;[products, total] = await Promise.all([
+                prisma.product.findMany({
+                    where,
+                    orderBy: { createdAt: 'desc' },
+                    skip,
+                    take: limit,
+                    select: {
+                        id: true,
+                        slug: true,
+                        name: true,
+                        description: true,
+                        price: true,
+                        image: true,
+                        coaUrl: true,
+                        casNumber: true,
+                        category: true,
+                        stock: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        reviews: {
+                            select: { rating: true }
+                        }
+                    } as any
+                }),
+                prisma.product.count({ where })
+            ])
+        } catch (e) {
+            // Backward compatible: if prod DB hasn't applied migrations yet, query without missing columns.
+            if (isMissingCoaColumnError(e) || isMissingSlugColumnError(e) || isMissingCasNumberError(e)) {
+                ;[products, total] = await Promise.all([
+                    prisma.product.findMany({
+                        where,
+                        orderBy: { createdAt: 'desc' },
+                        skip,
+                        take: limit,
+                        select: {
+                            id: true,
+                            name: true,
+                            description: true,
+                            price: true,
+                            image: true,
+                            category: true,
+                            stock: true,
+                            createdAt: true,
+                            updatedAt: true,
+                            reviews: {
+                                select: { rating: true }
+                            }
+                        }
+                    }),
+                    prisma.product.count({ where })
+                ])
+            } else {
+                throw e
+            }
+        }
+
+        const pages = Math.ceil(total / limit)
+
+        return {
+            products: products.map(p => ({
+                ...p,
+                slug: typeof p.slug === "string" ? p.slug : null,
+                coaUrl: typeof p.coaUrl === "string" ? p.coaUrl : null,
+                casNumber: typeof p.casNumber === "string" ? p.casNumber : null,
+                reviews: p.reviews || [],
+                price: p.price.toNumber(),
+                image: resolveProductImagePath({ image: p.image, slug: p.slug, name: p.name }),
+                createdAt: p.createdAt.toISOString(),
+                updatedAt: p.updatedAt.toISOString()
+            })),
+            pagination: {
+                total,
+                pages,
+                current: page,
+                limit
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching products:", error)
+        return {
+            products: [],
+            pagination: { total: 0, pages: 0, current: 1, limit }
+        }
+    }
+}
+
+export async function getProduct(identifier: string) {
+    try {
+        let product: any = null
+        try {
+            product = await prisma.product.findFirst({
+                where: {
+                    OR: [{ id: identifier }, { slug: identifier }],
+                } as any,
+                select: {
+                    id: true,
+                    slug: true,
+                    name: true,
+                    description: true,
+                    price: true,
+                    image: true,
+                    coaUrl: true,
+                    casNumber: true,
+                    category: true,
+                    stock: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    reviews: true
+                } as any
+            })
+        } catch (e) {
+            if (isMissingCoaColumnError(e) || isMissingSlugColumnError(e) || isMissingCasNumberError(e)) {
+                product = await prisma.product.findUnique({
+                    where: { id: identifier },
+                    select: {
+                        id: true,
+                        name: true,
+                        description: true,
+                        price: true,
+                        image: true,
+                        category: true,
+                        stock: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        reviews: true
+                    }
+                })
+            } else {
+                throw e
+            }
+        }
+        if (!product) return null
+
+        // Opportunistic slug backfill: if an older product has no slug yet, generate and store it once.
+        // This helps ensure UUID product URLs permanently redirect to keyword slugs (better for SEO).
+        try {
+            if (typeof product.slug !== "string" || product.slug.trim().length === 0) {
+                const newSlug = await ensureUniqueProductSlug(product.name, product.id)
+                await prisma.product.update({
+                    where: { id: product.id },
+                    data: { slug: newSlug },
+                    select: { id: true } as any
+                } as any)
+                product.slug = newSlug
+            }
+        } catch (e) {
+            // If slug column doesn't exist (older DB), ignore.
+            if (!isMissingSlugColumnError(e)) {
+                console.error("Slug backfill failed:", e)
+            }
+        }
+
+        return {
+            ...product,
+            slug: typeof product.slug === "string" ? product.slug : null,
+            coaUrl: typeof product.coaUrl === "string" ? product.coaUrl : null,
+            casNumber: typeof product.casNumber === "string" ? product.casNumber : null,
+            reviews: product.reviews || [],
+            price: product.price.toNumber(),
+            image: resolveProductImagePath({ image: product.image, slug: product.slug, name: product.name }),
+            createdAt: product.createdAt.toISOString(),
+            updatedAt: product.updatedAt.toISOString()
+        }
+    } catch (error) {
+        console.error("Error fetching product:", error)
+        return null
+    }
+}
+
+export async function getAdminStats() {
+    let stats: any = {
+        productCount: 0,
+        orderCount: 0,
+        userCount: 0,
+        totalRevenue: 0,
+        monthlyRevenue: 0,
+        averageOrderValue: 0,
+        paymentCounts: { UNPAID: 0, PAID: 0, REFUNDED: 0 },
+        fulfillmentCounts: { UNFULFILLED: 0, FULFILLED: 0, RETURNED: 0, TO_SHIP: 0 },
+        riskCounts: { HIGH: 0 },
+        recentOrders: [],
+        lowStockProducts: [],
+        salesOverTime: [],
+        topProducts: [],
+        recentLogs: []
+    };
+
+    try {
+        stats.productCount = await prisma.product.count().catch(() => 0)
+        stats.orderCount = await prisma.order.count().catch(() => 0)
+        stats.userCount = await prisma.user.count({ where: { role: 'USER' } }).catch(() => 0)
+
+        const revenue = await prisma.order.aggregate({
+            where: {
+                OR: [
+                    { paymentStatus: 'PAID' },
+                    { status: 'Payment Received' },
+                    { status: 'Shipped' }
+                ]
+            },
+            _sum: { total: true }
+        }).catch(() => ({ _sum: { total: 0 } }))
+        stats.totalRevenue = revenue._sum.total ? Number(revenue._sum.total) : 0
+
+        const startOfMonth = new Date()
+        startOfMonth.setDate(1)
+        startOfMonth.setHours(0, 0, 0, 0)
+
+        const monthlyRevenueAgg = await prisma.order.aggregate({
+            where: {
+                createdAt: { gte: startOfMonth },
+                OR: [
+                    { paymentStatus: 'PAID' },
+                    { status: 'Payment Received' },
+                    { status: 'Shipped' }
+                ]
+            },
+            _sum: { total: true }
+        }).catch(() => ({ _sum: { total: 0 } }))
+        stats.monthlyRevenue = monthlyRevenueAgg._sum.total ? Number(monthlyRevenueAgg._sum.total) : 0
+        stats.averageOrderValue = stats.orderCount > 0 ? stats.totalRevenue / stats.orderCount : 0
+
+        stats.paymentCounts = {
+            UNPAID: await prisma.order.count({
+                where: {
+                    OR: [
+                        { paymentStatus: 'UNPAID' },
+                        { status: 'Processing' },
+                        { status: 'PENDING' }
+                    ]
+                }
+            }).catch(() => 0),
+            PAID: await prisma.order.count({
+                where: {
+                    OR: [
+                        { paymentStatus: 'PAID' },
+                        { status: 'Payment Received' },
+                        { status: 'Shipped' }
+                    ]
+                }
+            }).catch(() => 0),
+            REFUNDED: await prisma.order.count({ where: { paymentStatus: 'REFUNDED' } }).catch(() => 0),
+        }
+
+        stats.fulfillmentCounts = {
+            UNFULFILLED: await prisma.order.count({
+                where: {
+                    OR: [
+                        { fulfillmentStatus: 'UNFULFILLED' },
+                        { status: 'Processing' },
+                        { status: 'Payment Received' },
+                        { status: 'PENDING' }
+                    ]
+                }
+            }).catch(() => 0),
+            FULFILLED: await prisma.order.count({
+                where: {
+                    OR: [
+                        { fulfillmentStatus: 'FULFILLED' },
+                        { status: 'Shipped' }
+                    ]
+                }
+            }).catch(() => 0),
+            RETURNED: await prisma.order.count({ where: { fulfillmentStatus: 'RETURNED' } }).catch(() => 0),
+            TO_SHIP: await prisma.order.count({
+                where: {
+                    OR: [
+                        { paymentStatus: 'PAID' },
+                        { status: 'Payment Received' }
+                    ],
+                    fulfillmentStatus: 'UNFULFILLED'
+                }
+            }).catch(() => 0)
+        }
+
+        stats.riskCounts = {
+            HIGH: await prisma.order.count({ where: { riskStatus: 'HIGH' } }).catch(() => 0),
+        }
+
+        stats.recentOrders = await prisma.order.findMany({
+            take: 5,
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                customerName: true,
+                total: true,
+                status: true,
+                paymentStatus: true,
+                fulfillmentStatus: true,
+                createdAt: true,
+                customerEmail: true
+            }
+        }).catch(() => [])
+
+        stats.lowStockProducts = await prisma.product.findMany({
+            where: { stock: { lte: 10 } },
+            take: 5,
+            orderBy: { stock: 'asc' },
+            select: { id: true, name: true, stock: true, image: true }
+        }).catch(() => [])
+
+        const thirtyDaysAgo = new Date()
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+        const ordersLast30Days = await prisma.order.findMany({
+            where: {
+                createdAt: { gte: thirtyDaysAgo },
+                paymentStatus: 'PAID'
+            },
+            select: { total: true, createdAt: true }
+        }).catch(() => [])
+
+        const salesMap: Record<string, number> = {}
+        ordersLast30Days.forEach((order: any) => {
+            const date = new Date(order.createdAt).toISOString().split('T')[0]
+            salesMap[date] = (salesMap[date] || 0) + Number(order.total)
+        })
+        stats.salesOverTime = Object.entries(salesMap).map(([date, amount]) => ({ date, amount })).sort((a, b) => a.date.localeCompare(b.date))
+
+        const topSellingItems = await prisma.orderItem.groupBy({
+            by: ['productId'],
+            _sum: { quantity: true },
+            orderBy: { _sum: { quantity: true } },
+            take: 5
+        }).catch(() => [])
+
+        stats.topProducts = await Promise.all(topSellingItems.map(async (item: any) => {
+            const product = await prisma.product.findUnique({
+                where: { id: item.productId },
+                select: { name: true, price: true, image: true }
+            })
+            return {
+                id: item.productId,
+                name: product?.name || "Unknown",
+                price: product?.price ? Number(product.price) : 0,
+                image: product?.image || null,
+                totalSold: item._sum.quantity || 0
+            }
+        })).catch(() => [])
+
+        stats.recentLogs = await prisma.auditLog.findMany({
+            take: 10,
+            orderBy: { createdAt: 'desc' },
+            include: { user: { select: { name: true, email: true } } }
+        }).catch(() => [])
+
+        return stats;
+    } catch (e) {
+        console.error("Failed to fetch admin stats", e)
+        return stats;
+    }
+}
+
+import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
+
+import { writeFile, mkdir } from "fs/promises"
+import { join } from "path"
+
+export async function createProduct(formData: FormData) {
+    const name = formData.get("name") as string
+    const price = parseFloat(formData.get("price") as string)
+    const description = formData.get("description") as string
+    const category = formData.get("category") as string
+    const stock = parseInt(formData.get("stock") as string) || 0
+    const coaUrlRaw = formData.get("coaUrl") as string | null
+    const casNumberRaw = formData.get("casNumber") as string | null
+
+    let imagePath = formData.get("image") as string // Fallback to text if no file?
+
+    const file = formData.get("imageFile") as File
+    if (file && file.size > 0) {
+        const bytes = await file.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+
+        // Ensure directory exists
+        const uploadDir = join(process.cwd(), "public", "products")
+        await mkdir(uploadDir, { recursive: true })
+
+        // Unique filename
+        const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
+        const filepath = join(uploadDir, filename)
+
+        await writeFile(filepath, buffer)
+        imagePath = `/products/${filename}`
+    }
+
+    const dataWithoutCoa: any = {
+        name,
+        price,
+        description,
+        category,
+        stock,
+        image: imagePath,
+    }
+    const dataWithCoa: any = {
+        ...dataWithoutCoa,
+        coaUrl: coaUrlRaw && coaUrlRaw.trim().length > 0 ? coaUrlRaw.trim() : null,
+        casNumber: casNumberRaw && casNumberRaw.trim().length > 0 ? casNumberRaw.trim() : null,
+    }
+
+    // IMPORTANT: Always select minimal fields so Prisma doesn't try to RETURNING missing columns.
+    let slug: string | null = null
+    try {
+        slug = await ensureUniqueProductSlug(name)
+    } catch (e) {
+        if (!isMissingSlugColumnError(e)) throw e
+    }
+
+    const dataWithCoaAndSlug: any = slug ? { ...dataWithCoa, slug } : dataWithCoa
+    const dataWithoutCoaWithSlug: any = slug ? { ...dataWithoutCoa, slug } : dataWithoutCoa
+
+    try {
+        await prisma.product.create({ data: dataWithCoaAndSlug, select: { id: true } as any } as any)
+    } catch (e1) {
+        // If coaUrl, slug, or casNumber columns are missing, retry without those fields.
+        if (isMissingCoaColumnError(e1) || isMissingSlugColumnError(e1) || isMissingCasNumberError(e1)) {
+            const retryData: any = { ...dataWithoutCoaWithSlug }
+            if (isMissingSlugColumnError(e1)) delete retryData.slug
+            if (isMissingCasNumberError(e1)) delete retryData.casNumber
+
+            try {
+                await prisma.product.create({ data: retryData, select: { id: true } as any } as any)
+            } catch (e2) {
+                const retryData2 = { ...retryData }
+                if (isMissingSlugColumnError(e2)) delete retryData2.slug
+                if (isMissingCasNumberError(e2)) delete retryData2.casNumber
+                if (isMissingCoaColumnError(e2)) delete retryData2.coaUrl
+
+                await prisma.product.create({ data: retryData2, select: { id: true } as any } as any)
+            }
+        } else {
+            throw e1
+        }
+    }
+
+    revalidatePath("/")
+    revalidatePath("/admin/products")
+
+    // Ping IndexNow
+    await pingIndexNow(['/', `/product/${slug || name}`]);
+
+    redirect("/admin/products")
+}
+
+export async function updateProduct(id: string, formData: FormData) {
+    const name = formData.get("name") as string
+    const price = parseFloat(formData.get("price") as string)
+    const description = formData.get("description") as string
+    const category = formData.get("category") as string
+    const stock = parseInt(formData.get("stock") as string) || 0
+    const coaUrlRaw = formData.get("coaUrl") as string | null
+    const casNumberRaw = formData.get("casNumber") as string | null
+
+    let imagePath = formData.get("image") as string
+
+    const file = formData.get("imageFile") as File
+    if (file && file.size > 0) {
+        const bytes = await file.arrayBuffer()
+        const buffer = Buffer.from(bytes)
+        const uploadDir = join(process.cwd(), "public", "products")
+        await mkdir(uploadDir, { recursive: true })
+        const filename = `${Date.now()}-${file.name.replace(/\s/g, '-')}`
+        const filepath = join(uploadDir, filename)
+        await writeFile(filepath, buffer)
+        imagePath = `/products/${filename}`
+    }
+
+    const data: any = {
+        name,
+        price,
+        description,
+        category,
+        stock,
+        coaUrl: coaUrlRaw && coaUrlRaw.trim().length > 0 ? coaUrlRaw.trim() : null,
+        casNumber: casNumberRaw && casNumberRaw.trim().length > 0 ? casNumberRaw.trim() : null,
+    }
+    // Regenerate slug (best-effort; won't crash if slug column missing)
+    try {
+        data.slug = await ensureUniqueProductSlug(name, id)
+    } catch (e) {
+        if (!isMissingSlugColumnError(e)) throw e
+    }
+
+    // Only update image if new one provided (either file or url)
+    if (imagePath && imagePath.length > 0) {
+        data.image = imagePath
+    }
+
+    // IMPORTANT: Always select minimal fields so Prisma doesn't try to RETURNING missing columns.
+    try {
+        await prisma.product.update({
+            where: { id },
+            data,
+            select: { id: true } as any
+        })
+    } catch (e) {
+        if (isMissingCoaColumnError(e) || isMissingSlugColumnError(e) || isMissingCasNumberError(e)) {
+            const { coaUrl, slug, casNumber, ...rest } = data
+            const cleanData = { ...rest }
+            if (!isMissingCoaColumnError(e)) cleanData.coaUrl = coaUrl
+            if (!isMissingSlugColumnError(e)) cleanData.slug = slug
+            if (!isMissingCasNumberError(e)) cleanData.casNumber = casNumber
+
+            await prisma.product.update({
+                where: { id },
+                data: cleanData,
+                select: { id: true } as any
+            })
+        } else {
+            throw e
+        }
+    }
+
+    revalidatePath("/")
+    revalidatePath("/admin/products")
+
+    // Ping IndexNow
+    await pingIndexNow(['/', `/product/${slug || name}`]);
+
+    redirect("/admin/products")
+}
+
+export async function deleteProduct(id: string) {
+    const product = await prisma.product.findUnique({
+        where: { id },
+        select: { slug: true, name: true }
+    })
+
+    await prisma.product.delete({ where: { id } })
+    revalidatePath("/")
+    revalidatePath("/admin/products")
+
+    // Ping IndexNow
+    if (product) {
+        await pingIndexNow(['/', `/product/${product.slug || product.name}`]);
+    }
+}
+
+export type CreateOrderParams = {
+    customerName: string
+    customerEmail: string
+    total: number
+    userId?: string
+
+    // New Fields
+    shippingName?: string
+    shippingAddress?: string
+    shippingMethod?: string
+    shippingCost?: number
+    billingName?: string
+    billingAddress?: string
+
+    // Coupon
+    discountTotal?: number
+    couponCode?: string
+
+    items: {
+        productId: string
+        quantity: number
+        price: number
+    }[]
+    paymentStatus?: string
+    status?: string
+}
+
+import { auth } from "@/auth"
+
+export async function createOrder(data: CreateOrderParams) {
+    try {
+        const session = await auth();
+        let userId = data.userId;
+        let customerName = data.customerName;
+        let customerEmail = data.customerEmail;
+
+        if (session?.user) {
+            // Verify if user actually exists in DB (handle stale sessions)
+            const exists = await prisma.user.findUnique({ where: { id: session.user.id } })
+            if (exists) {
+                userId = session.user.id;
+                customerName = session.user.name || customerName;
+                customerEmail = session.user.email || customerEmail;
+            } else {
+                console.warn(`[createOrder] Session User ID ${session.user.id} not found in DB. Proceeding as Guest.`)
+            }
+        }
+
+        console.log("Creating Order with resolved data:", {
+            userId,
+            customerName,
+            customerEmail,
+            total: data.total,
+            itemsCount: data.items.length
+        })
+
+        if (!customerEmail) {
+            console.error("CRITICAL: request to create order without email")
+            throw new Error("Customer Email is required")
+        }
+
+        console.log("Creating Order with data:", JSON.stringify(data, null, 2))
+
+        const order = await prisma.order.create({
+            data: {
+                customerName,
+                customerEmail,
+                total: data.total,
+                status: data.status || "Processing",
+                paymentStatus: data.paymentStatus || "UNPAID",
+                paidAt: data.paymentStatus === "PAID" ? new Date() : null,
+                user: userId ? { connect: { id: userId } } : undefined,
+
+                shippingName: data.shippingName,
+                shippingAddress: data.shippingAddress,
+                shippingMethod: data.shippingMethod,
+                shippingCost: data.shippingCost,
+                billingName: data.billingName,
+                billingAddress: data.billingAddress,
+
+                discountTotal: data.discountTotal || 0,
+                couponCode: data.couponCode,
+
+                items: {
+                    create: data.items.map(item => ({
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        price: item.price
+                    }))
+                }
+            } as any,
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            }
+        })
+
+        // Decrease stock
+        for (const item of data.items) {
+            await prisma.product.update({
+                where: { id: item.productId },
+                data: { stock: { decrement: item.quantity } }
+            })
+        }
+
+        revalidatePath("/admin/products")
+        revalidatePath("/admin/orders")
+
+        // 1. Send Order Placed Email to Customer (Awaited to ensure delivery in serverless)
+        try {
+            await sendEmail({
+                to: order.customerEmail,
+                subject: `Order Confirmation #${order.id.slice(0, 8).toUpperCase()}`,
+                react: <OrderPlacedEmail
+                    orderId={ order.id.slice(0, 8).toUpperCase() }
+                    customerName = { order.customerName }
+                    items = {
+                    order.items.map((item: any) => ({
+                        name: item.product.name,
+                        quantity: item.quantity,
+                        price: Number(item.price)
+                    }))
+                }
+                    total = { Number(order.total)
+        }
+                />
+    });
+} catch (err) {
+    console.error("Failed to send order placed email:", err);
+}
+
+// 2. Send New Order Alert to Admin (Awaited)
+if (process.env.ADMIN_EMAIL) {
+    try {
+        await sendEmail({
+            to: process.env.ADMIN_EMAIL,
+            subject: `NEW ORDER #${order.id.slice(0, 8).toUpperCase()}`,
+            react: <AdminNewOrderEmail
+                        orderId={ order.id.slice(0, 8).toUpperCase() }
+                        customerName = { order.customerName }
+                        customerEmail = { order.customerEmail }
+                        items = {
+                order.items.map((item: any) => ({
+                    name: item.product.name,
+                    quantity: item.quantity,
+                    price: Number(item.price)
+                }))
+            }
+                        total = { Number(order.total)
+    }
+                    />
+});
+            } catch (err) {
+    console.error("Failed to send admin order alert email:", err);
+}
+        }
+
+// Notify Telegram (Fire and forget)
+notifyTelegram(order, data.items).catch(err => console.error("Telegram notification failed:", err))
+
+return serializeOrder(order)
+    } catch (error: any) {
+    console.error("Failed to create order. Error details:", error.message, error.stack)
+    throw new Error(`Failed to create order: ${error.message}`)
+}
+}
+
+// Helper to escape Markdown special characters
+function escapeMarkdown(text: string) {
+    if (!text) return ""
+    return text.replace(/[_*[\]()~>#+\-=|{}.!\\`]/g, '\\$&')
+}
+
+export async function submitContactForm(formData: FormData) {
+    try {
+        const name = formData.get("name") as string
+        const email = formData.get("email") as string
+        const subject = formData.get("subject") as string
+        const message = formData.get("message") as string
+
+        // 1. Notify Telegram
+        await notifyTelegramSupport({ name, email, subject, message })
+
+        // 2. Send actual email via Resend
+        if (process.env.ADMIN_EMAIL) {
+            try {
+                // To Admin
+                await sendEmail({
+                    to: process.env.ADMIN_EMAIL,
+                    replyTo: email,
+                    subject: `Contact Form: ${subject}`,
+                    react: (
+                        <div style= {{ fontFamily: 'monospace', padding: '20px', border: '2px solid #000' }}>
+                            <h2 style={ { borderBottom: '2px solid #000', paddingBottom: '10px', textTransform: 'uppercase' } }> New Contact Inquiry </h2>
+                                < p > <strong>FROM: </strong> {name} ({email})</p >
+                                    <p><strong>SUBJECT: </strong> {subject}</p >
+                                        <div style={ { marginTop: '20px', padding: '15px', background: '#f9f9f9', border: '1px solid #ddd' } }>
+                                            <p style={ { whiteSpace: 'pre-wrap' } }> { message } </p>
+                                                </div>
+                                                < p style = {{ marginTop: '20px', fontSize: '10px', color: '#888', textTransform: 'uppercase' }
+        }>
+            You can reply directly to this email to contact the user.
+                            </p>
+                </div>
+                    )
+    });
+
+    // To Customer (Receipt)
+    await sendEmail({
+        to: email,
+        subject: `Message Received: ${subject}`,
+        react: (
+            <div style= {{ fontFamily: 'monospace', padding: '20px', border: '2px solid #000' }}>
+                <h2 style={ { borderBottom: '2px solid #000', paddingBottom: '10px', textTransform: 'uppercase' } }> Message Received </h2>
+                    < p > Hi { name }, </p>
+                        < p > Thank you for contacting Universal Peptide.We have received your inquiry regarding < strong > "{subject}" < /strong> and our technical team will get back to you shortly.</p >
+                            <p>A copy of your message is below for your records: </p>
+                                < div style = {{ marginTop: '20px', padding: '15px', background: '#f9f9f9', border: '1px solid #ddd' }}>
+                                    <p style={ { whiteSpace: 'pre-wrap' } }> { message } </p>
+                                        </div>
+                                        < p style = {{ marginTop: '40px', fontSize: '10px', color: '#888', textAlign: 'center', textTransform: 'uppercase' }}>
+                                            For laboratory research use only.Not for human consumption.
+                            </p>
+                                                </div>
+                    )
+                });
+            } catch (err) {
+    console.error("Failed to send contact emails:", err);
+}
+        }
+
+return { success: true }
+    } catch (error) {
+    console.error("Contact form error:", error)
+    return { success: false, error: "Failed to send message" }
+}
+}
+
+async function notifyTelegram(order: any, items: any[]) {
+    const token = process.env.TELEGRAM_BOT_TOKEN
+    const chatId = process.env.TELEGRAM_CHAT_ID
+
+    if (!token || !chatId) {
+        console.warn("Skipping Telegram notification: Missing env vars")
+        return
+    }
+
+    const itemDetails = items.map(i => `- PID: ${escapeMarkdown(i.productId)} x ${i.quantity}`).join('\n')
+
+    const message = `
+📦 *New Order Placed!*
+
+🆔 *ID:* \`${order.id.slice(0, 8).toUpperCase()}\`
+👤 *Customer:* ${escapeMarkdown(order.customerName)}
+📧 *Email:* ${escapeMarkdown(order.customerEmail)}
+💰 *Total:* ${formatCurrency(Number(order.total))}
+
+📝 *Items:*
+${itemDetails}
+
+📍 *Shipping:* ${escapeMarkdown(order.shippingCity || 'N/A')}, ${escapeMarkdown(order.shippingCountry || 'N/A')}
+`.trim()
+
+    await sendTelegramMessage(message)
+}
+
+async function notifyTelegramSupport(data: { name: string, email: string, subject: string, message: string }) {
+    const message = `
+📨 *New Support Message*
+
+👤 *Name:* ${escapeMarkdown(data.name)}
+📧 *Email:* ${escapeMarkdown(data.email)}
+📝 *Subject:* ${escapeMarkdown(data.subject)}
+
+💬 *Message:*
+${escapeMarkdown(data.message)}
+`.trim()
+
+    await sendTelegramMessage(message)
+}
+
+async function sendTelegramMessage(text: string) {
+    const token = process.env.TELEGRAM_BOT_TOKEN
+    const chatId = process.env.TELEGRAM_CHAT_ID
+
+    if (!token || !chatId) {
+        console.warn("Skipping Telegram notification: Missing env vars")
+        return
+    }
+
+    const url = `https://api.telegram.org/bot${token}/sendMessage`
+
+    await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'MarkdownV2'
+        })
+    })
+}
+
+// Helper to convert Decimal to number/string for Client Components
+function serializeOrder(order: any) {
+    if (!order) return null
+    return {
+        ...order,
+        total: Number(order.total),
+        shippingCost: Number(order.shippingCost),
+        discountTotal: Number(order.discountTotal),
+        taxTotal: Number(order.taxTotal),
+        items: order.items.map((item: any) => ({
+            ...item,
+            price: Number(item.price),
+            product: {
+                ...item.product,
+                price: Number(item.product.price)
+            }
+        }))
+    }
+}
+
+export async function getOrder(id: string) {
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id },
+            include: { items: { include: { product: true } } }
+        })
+        return serializeOrder(order)
+    } catch (error) {
+        console.error("Error fetching order:", error)
+        return null
+    }
+}
+
+export async function updateOrderStatus(orderId: string, status: string) {
+    try {
+        await prisma.order.update({
+            where: { id: orderId },
+            data: { status }
+        })
+        revalidatePath("/admin/orders")
+        revalidatePath(`/admin/orders/${orderId}`)
+        return { success: true }
+    } catch (error) {
+        console.error("Error updating order status:", error)
+    }
+}
+
+export async function updateOrderStatuses(
+    orderId: string,
+    data: {
+        paymentStatus: string,
+        fulfillmentStatus: string,
+        riskStatus: string,
+        trackingCode?: string,
+        trackingUrl?: string,
+        internalNotes?: string
+    }
+) {
+    try {
+        const existing = await prisma.order.findUnique({
+            where: { id: orderId },
+            select: {
+                id: true,
+                customerEmail: true,
+                customerName: true,
+                paidAt: true,
+                confirmedAt: true,
+                shippedAt: true,
+                paymentStatus: true,
+                fulfillmentStatus: true
+            } as any
+        }) as any
+
+        const updateData: any = {
+            paymentStatus: data.paymentStatus,
+            fulfillmentStatus: data.fulfillmentStatus,
+            riskStatus: data.riskStatus,
+            trackingCode: data.trackingCode,
+            trackingUrl: data.trackingUrl,
+            internalNotes: data.internalNotes
+        }
+
+        // --- Logic for status synchronization ---
+
+        // Initial state is "Processing" (from createOrder)
+
+        // 1. Payment Confirmation -> "Payment Received"
+        if (data.paymentStatus === "PAID" && !existing?.paidAt) {
+            updateData.paidAt = new Date()
+            updateData.status = "Payment Received"
+
+            if (!existing?.confirmedAt) {
+                updateData.confirmedAt = new Date()
+                // Send Order Confirmed Email (Awaited)
+                try {
+                    await sendEmail({
+                        to: existing.customerEmail,
+                        subject: `Payment Received - Order #${existing.id.slice(0, 8).toUpperCase()}`,
+                        react: <OrderConfirmedEmail
+                            orderId={ existing.id.slice(0, 8).toUpperCase() }
+                            customerName = { existing.customerName }
+                        />
+                    });
+            } catch (err) {
+                console.error("Failed to send order confirmed email:", err);
+            }
+        }
+    }
+
+        // 2. Shipment -> "Shipped"
+        if (data.fulfillmentStatus === "FULFILLED" && existing?.fulfillmentStatus !== "FULFILLED") {
+        updateData.shippedAt = new Date()
+        updateData.status = "Shipped"
+
+        // Send Order Shipped Email (Awaited)
+        if (data.trackingCode) {
+            try {
+                await sendEmail({
+                    to: existing.customerEmail,
+                    subject: `Order Shipped #${existing.id.slice(0, 8).toUpperCase()}`,
+                    react: <OrderShippedEmail
+                            orderId={ existing.id.slice(0, 8).toUpperCase() }
+                            customerName = { existing.customerName }
+                            trackingCode = { data.trackingCode }
+                            trackingUrl = { data.trackingUrl }
+                    />
+                    });
+        } catch (err) {
+            console.error("Failed to send order shipped email:", err);
+        }
+    }
+}
+
+// 3. Refund -> "Refunded"
+if (data.paymentStatus === "REFUNDED" && existing?.paymentStatus !== "REFUNDED") {
+    updateData.status = "Refunded"
+    // Send Refund Email (Awaited)
+    try {
+        await sendEmail({
+            to: existing.customerEmail,
+            subject: `Order Refunded #${existing.id.slice(0, 8).toUpperCase()}`,
+            react: <OrderRefundedEmail
+                        orderId={ existing.id.slice(0, 8).toUpperCase() }
+                        customerName = { existing.customerName }
+            />
+                });
+} catch (err) {
+    console.error("Failed to send refund email:", err);
+}
+        }
+
+// 4. Cancel -> "Canceled"
+if (data.fulfillmentStatus === "CANCELED" && existing?.fulfillmentStatus !== "CANCELED") {
+    updateData.status = "Canceled"
+}
+
+await prisma.order.update({
+    where: { id: orderId },
+    data: updateData
+})
+
+revalidatePath('/admin/orders')
+revalidatePath(`/admin/orders/${orderId}`)
+revalidatePath(`/order/${orderId}`)
+return { success: true }
+    } catch (error) {
+    console.error("Error updating order statuses:", error)
+    return { success: false, error: "Failed to update statuses" }
+}
+}
+
+export async function getOrders() {
+    try {
+        const orders = await prisma.order.findMany({
+            orderBy: { createdAt: 'desc' },
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            }
+        })
+        return orders.map(serializeOrder)
+    } catch (error) {
+        console.error("Error fetching orders:", error)
+        return []
+    }
+}
+
+export async function getUserOrders(userId: string) {
+    try {
+        const orders = await prisma.order.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            }
+        })
+        return orders.map(serializeOrder)
+    } catch (error) {
+        console.error("Error fetching user orders:", error)
+        return []
+    }
+}
+
+export async function getUser(id: string) {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id },
+            include: {
+                orders: {
+                    orderBy: { createdAt: 'desc' },
+                    include: { items: true }
+                }
+            }
+        })
+        if (!user) return null
+
+        const ltv = user.orders.reduce((acc, order) => acc + Number(order.total), 0)
+
+        return {
+            ...user,
+            ltv,
+            orders: user.orders.map(o => ({
+                ...o,
+                total: Number(o.total),
+                createdAt: o.createdAt.toISOString()
+            }))
+        }
+    } catch (error) {
+        console.error("Error fetching user:", error)
+        return null
+    }
+}
+
+// --- Coupon Actions ---
+
+export async function getCoupons() {
+    try {
+        const coupons = await (prisma as any).coupon.findMany({
+            orderBy: { createdAt: 'desc' }
+        })
+        return coupons
+    } catch (error) {
+        console.error("Error fetching coupons:", error)
+        return []
+    }
+}
+
+export async function createCoupon(formData: FormData) {
+    const code = formData.get("code") as string
+    const discount = parseInt(formData.get("discount") as string)
+    const type = formData.get("type") as string || "PERCENT"
+    const minSpend = parseFloat(formData.get("minSpend") as string) || null
+
+    if (!code) {
+        throw new Error("Missing required fields")
+    }
+
+    await (prisma as any).coupon.create({
+        data: {
+            code: code.toUpperCase(),
+            discount: discount || 0,
+            type,
+            minSpend,
+            isActive: true
+        }
+    })
+
+    revalidatePath("/admin/coupons")
+}
+
+export async function deleteCoupon(id: string) {
+    await (prisma as any).coupon.delete({ where: { id } })
+    revalidatePath("/admin/coupons")
+}
+
+export async function toggleCoupon(id: string, isActive: boolean) {
+    await (prisma as any).coupon.update({
+        where: { id },
+        data: { isActive }
+    })
+    revalidatePath("/admin/coupons")
+}
+
+export async function validateCoupon(code: string, currentTotal?: number) {
+    try {
+        const coupon = await (prisma as any).coupon.findUnique({
+            where: { code: code.toUpperCase() }
+        })
+
+        if (!coupon) {
+            return { valid: false, message: "Invalid coupon code" }
+        }
+
+        if (!coupon.isActive) {
+            return { valid: false, message: "Coupon is no longer active" }
+        }
+
+        if (coupon.minSpend && currentTotal && currentTotal < Number(coupon.minSpend)) {
+            return { valid: false, message: `Minimum spend of ${formatCurrency(Number(coupon.minSpend))} required.` }
+        }
+
+        return {
+            valid: true,
+            discount: coupon.discount,
+            code: coupon.code,
+            type: coupon.type,
+            message: coupon.type === 'FREE_SHIPPING'
+                ? "Free shipping applied!"
+                : `Coupon applied: ${coupon.type === 'FIXED' ? formatCurrency(coupon.discount) : coupon.discount + '%'} off!`
+        }
+    } catch (error) {
+        console.error("Error validating coupon:", error)
+        return { valid: false, message: "Error determining coupon validity" }
+    }
+}
+
+// --- Shipping Actions ---
+
+export async function getShippingMethods() {
+    try {
+        const methods = await (prisma as any).shippingMethod.findMany({
+            orderBy: { price: 'asc' }
+        })
+        return methods.map((m: any) => ({
+            ...m,
+            price: Number(m.price)
+        }))
+    } catch (error) {
+        console.error("Error fetching shipping:", error)
+        return []
+    }
+}
+
+export async function createShippingMethod(formData: FormData) {
+    const name = formData.get("name") as string
+    const price = parseFloat(formData.get("price") as string)
+    const time = formData.get("time") as string
+
+    await (prisma as any).shippingMethod.create({
+        data: {
+            name,
+            price,
+            time,
+            isActive: true
+        }
+    })
+
+    revalidatePath("/admin/shipping")
+}
+
+export async function deleteShippingMethod(id: string) {
+    await (prisma as any).shippingMethod.delete({ where: { id } })
+    revalidatePath("/admin/shipping")
+}
+
+export async function toggleShippingMethod(id: string, isActive: boolean) {
+    await (prisma as any).shippingMethod.update({
+        where: { id },
+        data: { isActive }
+    })
+    revalidatePath("/admin/shipping")
+}
+
+// --- Blog Actions ---
+
+export async function getPosts(onlyPublished = true) {
+    try {
+        const posts = await (prisma as any).blogPost.findMany({
+            where: onlyPublished ? { published: true } : {},
+            orderBy: { createdAt: 'desc' }
+        })
+        return posts
+    } catch (error) {
+        console.error("Error fetching posts:", error)
+        return []
+    }
+}
+
+export async function getPost(slugOrId: string) {
+    try {
+        const post = await (prisma as any).blogPost.findFirst({
+            where: {
+                OR: [{ id: slugOrId }, { slug: slugOrId }]
+            }
+        })
+        return post
+    } catch (error) {
+        console.error("Error fetching post:", error)
+        return null
+    }
+}
+
+export async function createPost(formData: FormData) {
+    const title = formData.get("title") as string
+    const content = formData.get("content") as string
+    const excerpt = formData.get("excerpt") as string
+    const published = formData.get("published") === "on"
+    const slug = slugify(title)
+
+    await (prisma as any).blogPost.create({
+        data: {
+            title,
+            slug,
+            content,
+            excerpt,
+            published
+        }
+    })
+
+    revalidatePath("/admin/products")
+    revalidatePath("/admin/blog")
+
+    // Ping IndexNow
+    await pingIndexNow(['/', '/blog', `/blog/${slug}`]);
+
+    redirect("/admin/blog")
+}
+
+export async function updatePost(id: string, formData: FormData) {
+    const title = formData.get("title") as string
+    const content = formData.get("content") as string
+    const excerpt = formData.get("excerpt") as string
+    const published = formData.get("published") === "on"
+    const slug = slugify(title)
+
+    await (prisma as any).blogPost.update({
+        where: { id },
+        data: {
+            title,
+            slug,
+            content,
+            excerpt,
+            published
+        }
+    })
+
+    revalidatePath("/blog")
+    revalidatePath(`/blog/${slug}`)
+    revalidatePath("/admin/blog")
+
+    // Ping IndexNow
+    await pingIndexNow(['/', '/blog', `/blog/${slug}`]);
+
+    redirect("/admin/blog")
+}
+
+export async function deletePost(id: string) {
+    const post = await (prisma as any).blogPost.findUnique({
+        where: { id },
+        select: { slug: true }
+    })
+
+    await (prisma as any).blogPost.delete({ where: { id } })
+    revalidatePath("/blog")
+    revalidatePath("/admin/blog")
+
+    // Ping IndexNow
+    if (post) {
+        await pingIndexNow(['/', '/blog', `/blog/${post.slug}`]);
+    }
+}
+
+// --- Payment Actions ---
+
+export async function generateNowPaymentsInvoice(orderId: string) {
+    const order = await getOrder(orderId)
+    if (!order) throw new Error("Order not found")
+
+    // Clean up SITE_URL to ensure it is a valid base for URI construction
+    const rawUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.universalpeptide.com'
+    const siteUrl = rawUrl.trim().replace(/[\n\r\t]/g, '').replace(/\/+$/, '')
+
+    try {
+        const invoiceData = {
+            price_amount: Number(order.total),
+            price_currency: 'eur',
+            order_id: order.id,
+            order_description: `Order #${order.id.slice(0, 8).toUpperCase()} - Universal Peptide`,
+            ipn_callback_url: `${siteUrl}/api/webhooks/nowpayments`,
+            success_url: `${siteUrl}/order/${order.id}?payment=success`,
+            cancel_url: `${siteUrl}/checkout?payment=cancelled`,
+        }
+
+        console.log("[NOWPayments] Creating invoice with data:", JSON.stringify(invoiceData, null, 2))
+
+        const invoice = await createNowPaymentsInvoice(invoiceData)
+
+        return { invoiceUrl: invoice.invoice_url }
+    } catch (error: any) {
+        console.error("[generateNowPaymentsInvoice] Error details:", error)
+        throw new Error(error.message || "Failed to create crypto invoice")
+    }
+}
+
+// --- Review Actions ---
+
+export async function createReview(formData: FormData) {
+    const productId = formData.get("productId") as string
+    const rating = parseInt(formData.get("rating") as string)
+    const comment = formData.get("comment") as string
+    const userName = formData.get("userName") as string
+
+    if (!productId || !rating || !userName) {
+        throw new Error("Missing required fields")
+    }
+
+    await prisma.review.create({
+        data: {
+            productId,
+            rating,
+            comment,
+            userName
+        }
+    })
+
+    const product = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { slug: true }
+    })
+
+    revalidatePath(`/product/${product?.slug || productId}`)
+}
+
+export async function getProductReviews(productId: string) {
+    try {
+        const reviews = await prisma.review.findMany({
+            where: { productId },
+            orderBy: { createdAt: 'desc' }
+        })
+        return reviews
+    } catch (error) {
+        console.error("Error fetching reviews:", error)
+        return []
+    }
+}
