@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CheckCircle2, Circle, XCircle } from 'lucide-react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfToday } from 'date-fns';
-import { getDoseLogs, getPeptides, updateDoseLog } from '@/lib/db';
+import { ChevronLeft, ChevronRight, CheckCircle2, Circle, XCircle, Trash2 } from 'lucide-react';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfToday } from 'date-fns';
+import { getDoseLogs, getPeptides, updateDoseLog, deleteProtocol } from '@/lib/db';
 import { syncData } from '@/lib/sync';
 import type { DoseLog, Peptide } from '@/types';
 
@@ -74,7 +74,36 @@ export default function CalendarView() {
     syncData();
   };
 
+  // Delete protocol and all its doses
+  const handleDeleteProtocol = async (protocolId: string, peptideName: string) => {
+    if (!confirm(`Are you sure you want to remove the entire protocol for ${peptideName}? This will delete all scheduled doses.`)) {
+      return;
+    }
+
+    try {
+      await deleteProtocol(protocolId);
+      await loadData();
+      syncData();
+    } catch (error) {
+      console.error('Error deleting protocol:', error);
+      alert('Failed to delete protocol');
+    }
+  };
+
   const selectedDateLogs = selectedDate ? getLogsForDate(selectedDate) : [];
+
+  // Group logs by protocol to show protocol-level actions
+  const protocolsOnDate = selectedDateLogs.reduce((acc, log) => {
+    if (!acc[log.protocolId]) {
+      acc[log.protocolId] = {
+        protocolId: log.protocolId,
+        peptideName: log.peptideName,
+        logs: []
+      };
+    }
+    acc[log.protocolId].logs.push(log);
+    return acc;
+  }, {} as Record<string, { protocolId: string; peptideName: string; logs: DoseLog[] }>);
 
   if (loading) {
     return (
@@ -211,50 +240,68 @@ export default function CalendarView() {
         </CardHeader>
         <CardContent>
           {selectedDateLogs.length > 0 ? (
-            <div className="space-y-3">
-              {selectedDateLogs.map((log) => (
-                <div
-                  key={log.id}
-                  className={`p-3 rounded-lg border-2 transition-all ${log.status === 'taken'
-                    ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
-                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
-                    }`}
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <div className="font-semibold">{log.peptideName}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {log.targetDose} {log.doseUnit}
-                      </div>
-                    </div>
+            <div className="space-y-4">
+              {Object.values(protocolsOnDate).map((protocol) => (
+                <div key={protocol.protocolId} className="space-y-2">
+                  {/* Protocol header with delete button */}
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+                    <div className="font-semibold text-sm">{protocol.peptideName}</div>
                     <Button
                       size="sm"
-                      variant={log.status === 'taken' ? 'outline' : 'default'}
-                      onClick={() => toggleDoseStatus(log)}
+                      variant="ghost"
+                      className="h-8 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                      onClick={() => handleDeleteProtocol(protocol.protocolId, protocol.peptideName)}
                     >
-                      {log.status === 'taken' ? (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 mr-1" />
-                          Taken
-                        </>
-                      ) : (
-                        <>
-                          <Circle className="w-4 h-4 mr-1" />
-                          Mark Taken
-                        </>
-                      )}
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Remove Protocol
                     </Button>
                   </div>
-                  {log.status === 'taken' && log.actualDate && (
-                    <div className="text-xs text-muted-foreground">
-                      Taken at {format(new Date(log.actualDate), 'h:mm a')}
+
+                  {/* Dose logs for this protocol */}
+                  {protocol.logs.map((log) => (
+                    <div
+                      key={log.id}
+                      className={`p-3 rounded-lg border-2 transition-all ${log.status === 'taken'
+                        ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800'
+                        : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'
+                        }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="text-sm text-muted-foreground">
+                            {log.targetDose} {log.doseUnit}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant={log.status === 'taken' ? 'outline' : 'default'}
+                          onClick={() => toggleDoseStatus(log)}
+                        >
+                          {log.status === 'taken' ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4 mr-1" />
+                              Taken
+                            </>
+                          ) : (
+                            <>
+                              <Circle className="w-4 h-4 mr-1" />
+                              Mark Taken
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      {log.status === 'taken' && log.actualDate && (
+                        <div className="text-xs text-muted-foreground">
+                          Taken at {format(new Date(log.actualDate), 'h:mm a')}
+                        </div>
+                      )}
+                      {log.notes && (
+                        <div className="text-sm text-muted-foreground mt-2 p-2 bg-white/5 dark:bg-black/5 rounded backdrop-blur-sm">
+                          {log.notes}
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {log.notes && (
-                    <div className="text-sm text-muted-foreground mt-2 p-2 bg-white/5 dark:bg-black/5 rounded backdrop-blur-sm">
-                      {log.notes}
-                    </div>
-                  )}
+                  ))}
                 </div>
               ))}
             </div>
