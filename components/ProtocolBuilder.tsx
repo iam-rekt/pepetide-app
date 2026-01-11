@@ -26,6 +26,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
   const [frequency, setFrequency] = useState<'daily' | 'every-other-day' | 'weekly'>('daily');
   const [durationWeeks, setDurationWeeks] = useState('4');
   const [timeOfDay, setTimeOfDay] = useState('morning');
+  const [startDate, setStartDate] = useState(startOfToday().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -74,8 +75,8 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
       }
 
       // Create the protocol
-      const startDate = startOfToday();
-      const endDate = addDays(startDate, parseInt(durationWeeks) * 7);
+      const protocolStartDate = new Date(startDate);
+      const endDate = addDays(protocolStartDate, parseInt(durationWeeks) * 7);
 
       const protocol = await addProtocol({
         vialId: selectedVial.id,
@@ -85,7 +86,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
         targetDoseUnit,
         volumePerDose,
         frequency,
-        startDate,
+        startDate: protocolStartDate,
         endDate,
         timeOfDay,
         isActive: true,
@@ -96,7 +97,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
       const doseLogs = [];
 
       for (let i = 0; i < days; i++) {
-        const scheduledDate = addDays(startDate, i);
+        const scheduledDate = addDays(protocolStartDate, i);
 
         // Skip based on frequency
         if (frequency === 'every-other-day' && i % 2 !== 0) continue;
@@ -302,6 +303,24 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
                     <option value="mg">mg</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Start Date */}
+              <div className="space-y-2">
+                <Label htmlFor="startDate" className="text-base font-semibold">
+                  Start Date *
+                </Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  min={startOfToday().toISOString().split('T')[0]}
+                  className="h-12 text-lg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  When to start this protocol (can be future date)
+                </p>
               </div>
 
               {/* Duration */}
