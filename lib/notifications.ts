@@ -15,14 +15,13 @@ export async function checkMissedDoses() {
     try {
         const logs = await getDoseLogs();
         const now = new Date();
-        const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60 * 1000);
 
+        // Get all overdue pending doses (no time window restriction)
         const missedDoses = logs.filter(log => {
             const scheduledDate = new Date(log.scheduledDate);
             return (
                 log.status === 'pending' &&
-                scheduledDate < now &&
-                scheduledDate > fifteenMinutesAgo
+                scheduledDate < now
             );
         });
 
