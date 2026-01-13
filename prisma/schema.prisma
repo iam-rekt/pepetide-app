@@ -1,6 +1,3 @@
-// This is your Prisma schema file
-// https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,144 +7,197 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Community Peptide - main peptide entries shared by users
 model CommunityPeptide {
-  id                       String   @id @default(cuid())
-  name                     String   @unique
+  id                       String              @id @default(cuid())
+  name                     String              @unique
   description              String?
-  submittedBy              String   @map("submitted_by")
-  submissionCount          Int      @default(1) @map("submission_count")
-  commonDosageMin          Float?   @map("common_dosage_min")
-  commonDosageMax          Float?   @map("common_dosage_max")
-  commonDosageUnit         String?  @map("common_dosage_unit")
-  benefits                 String[] @default([])
-  contraindications        String[] @default([])
-  warnings                 String[] @default([])
-  storageInstructions      String?  @map("storage_instructions")
-  unreconstitutedShelfLife String?  @map("unreconstituted_shelf_life")
-  reconstitutedShelfLife   String?  @map("reconstituted_shelf_life")
-  upvotes                  Int      @default(0)
-  downvotes                Int      @default(0)
-  createdAt                DateTime @default(now()) @map("created_at")
-  updatedAt                DateTime @updatedAt @map("updated_at")
-
-  submissions PeptideSubmission[]
-  reviews     UserReview[]
-  votes       PeptideVote[]
+  submittedBy              String              @map("submitted_by")
+  submissionCount          Int                 @default(1) @map("submission_count")
+  commonDosageMin          Float?              @map("common_dosage_min")
+  commonDosageMax          Float?              @map("common_dosage_max")
+  commonDosageUnit         String?             @map("common_dosage_unit")
+  benefits                 String[]            @default([])
+  contraindications        String[]            @default([])
+  warnings                 String[]            @default([])
+  storageInstructions      String?             @map("storage_instructions")
+  unreconstitutedShelfLife String?             @map("unreconstituted_shelf_life")
+  reconstitutedShelfLife   String?             @map("reconstituted_shelf_life")
+  upvotes                  Int                 @default(0)
+  downvotes                Int                 @default(0)
+  createdAt                DateTime            @default(now()) @map("created_at")
+  updatedAt                DateTime            @updatedAt @map("updated_at")
+  submissions              PeptideSubmission[]
+  votes                    PeptideVote[]
+  reviews                  UserReview[]
 
   @@map("community_peptides")
 }
 
-// Peptide Submission - individual user submissions
 model PeptideSubmission {
-  id                   String   @id @default(cuid())
-  peptideName          String   @map("peptide_name")
-  submittedBy          String   @map("submitted_by")
-  description          String?
-  dosageMin            Float?   @map("dosage_min")
-  dosageMax            Float?   @map("dosage_max")
-  dosageUnit           String?  @map("dosage_unit")
-  benefits             String[] @default([])
-  contraindications    String[] @default([])
-  warnings             String[] @default([])
-  notes                String?
-  source               String?
-  createdAt            DateTime @default(now()) @map("created_at")
-
-  communityPeptide   CommunityPeptide? @relation(fields: [communityPeptideId], references: [id])
+  id                 String            @id @default(cuid())
+  peptideName        String            @map("peptide_name")
+  submittedBy        String            @map("submitted_by")
+  description        String?
+  dosageMin          Float?            @map("dosage_min")
+  dosageMax          Float?            @map("dosage_max")
+  dosageUnit         String?           @map("dosage_unit")
+  benefits           String[]          @default([])
+  contraindications  String[]          @default([])
+  warnings           String[]          @default([])
+  notes              String?
+  source             String?
+  createdAt          DateTime          @default(now()) @map("created_at")
   communityPeptideId String?           @map("community_peptide_id")
+  communityPeptide   CommunityPeptide? @relation(fields: [communityPeptideId], references: [id])
 
   @@map("peptide_submissions")
 }
 
-// User Review - reviews and experiences from users
 model UserReview {
-  id                   String   @id @default(cuid())
-  peptideName          String   @map("peptide_name")
-  username             String
-  dosageUsed           Float?   @map("dosage_used")
-  dosageUnit           String?  @map("dosage_unit")
-  frequency            String?
-  durationWeeks        Int?     @map("duration_weeks")
-  benefitsExperienced  String[] @default([]) @map("benefits_experienced")
-  sideEffects          String[] @default([]) @map("side_effects")
-  effectivenessRating  Int?     @map("effectiveness_rating")
-  notes                String?
-  helpfulVotes         Int      @default(0) @map("helpful_votes")
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
-
-  communityPeptide   CommunityPeptide? @relation(fields: [communityPeptideId], references: [id])
-  communityPeptideId String?           @map("community_peptide_id")
+  id                  String            @id @default(cuid())
+  peptideName         String            @map("peptide_name")
+  username            String
+  dosageUsed          Float?            @map("dosage_used")
+  dosageUnit          String?           @map("dosage_unit")
+  frequency           String?
+  durationWeeks       Int?              @map("duration_weeks")
+  benefitsExperienced String[]          @default([]) @map("benefits_experienced")
+  sideEffects         String[]          @default([]) @map("side_effects")
+  effectivenessRating Int?              @map("effectiveness_rating")
+  notes               String?
+  helpfulVotes        Int               @default(0) @map("helpful_votes")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+  communityPeptideId  String?           @map("community_peptide_id")
+  communityPeptide    CommunityPeptide? @relation(fields: [communityPeptideId], references: [id])
 
   @@map("user_reviews")
 }
 
-// Peptide Vote - track user votes
 model PeptideVote {
-  id             String   @id @default(cuid())
-  peptideId      String   @map("peptide_id")
-  userIdentifier String   @map("user_identifier")
-  voteType       String   @map("vote_type")
-  createdAt      DateTime @default(now()) @map("created_at")
-
+  id               String           @id @default(cuid())
+  peptideId        String           @map("peptide_id")
+  userIdentifier   String           @map("user_identifier")
+  voteType         String           @map("vote_type")
+  createdAt        DateTime         @default(now()) @map("created_at")
   communityPeptide CommunityPeptide @relation(fields: [peptideId], references: [id])
 
   @@unique([peptideId, userIdentifier])
   @@map("peptide_votes")
 }
 
-// User Settings & Sync
 model User {
-  id                String   @id @default(cuid())
-  telegramChatId    String?  @unique @map("telegram_chat_id")
-  telegramUsername  String?  @map("telegram_username")
-  pushSubscription  Json?    @map("push_subscription")
-  timezone          String   @default("UTC")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-
-  syncedProtocols   SyncedProtocol[]
+  id               String           @id @default(cuid())
+  telegramChatId   String?          @unique @map("telegram_chat_id")
+  telegramUsername String?          @map("telegram_username")
+  pushSubscription Json?            @map("push_subscription")
+  timezone         String           @default("UTC")
+  createdAt        DateTime         @default(now()) @map("created_at")
+  updatedAt        DateTime         @updatedAt @map("updated_at")
+  syncedProtocols  SyncedProtocol[]
 
   @@map("users")
 }
 
 model SyncedProtocol {
-  id             String   @id @default(cuid())
-  userId         String   @map("user_id")
-  localId        String   @map("local_id") // ID in IndexedDB
-  peptideName    String   @map("peptide_name")
-  otherPeptides  String[] @map("other_peptides") // For stacks
-  description    String?
-  startDate      DateTime @map("start_date")
-  endDate        DateTime? @map("end_date")
-  frequency      String   // e.g., "daily", "EOD", "3x/week"
-  doseAmount     Float    @map("dose_amount")
-  doseUnit       String   @map("dose_unit")
-  timeOfDay      String   @map("time_of_day")
-  isActive       Boolean  @default(true) @map("is_active")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  logs           SyncedLog[]
+  id            String      @id @default(cuid())
+  userId        String      @map("user_id")
+  localId       String      @map("local_id")
+  peptideName   String      @map("peptide_name")
+  otherPeptides String[]    @map("other_peptides")
+  description   String?
+  startDate     DateTime    @map("start_date")
+  endDate       DateTime?   @map("end_date")
+  frequency     String
+  doseAmount    Float       @map("dose_amount")
+  doseUnit      String      @map("dose_unit")
+  timeOfDay     String      @map("time_of_day")
+  isActive      Boolean     @default(true) @map("is_active")
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+  logs          SyncedLog[]
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, localId])
   @@map("synced_protocols")
 }
 
 model SyncedLog {
-  id               String   @id @default(cuid())
-  syncedProtocolId String   @map("synced_protocol_id")
-  localId          String   @map("local_id") // ID in IndexedDB
-  scheduledDate    DateTime @map("scheduled_date")
-  status           String   // 'pending', 'taken', 'skipped'
-  takenAt          DateTime? @map("taken_at")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-
+  id               String         @id @default(cuid())
+  syncedProtocolId String         @map("synced_protocol_id")
+  localId          String         @map("local_id")
+  scheduledDate    DateTime       @map("scheduled_date")
+  status           String
+  takenAt          DateTime?      @map("taken_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
   protocol         SyncedProtocol @relation(fields: [syncedProtocolId], references: [id], onDelete: Cascade)
 
   @@unique([syncedProtocolId, localId])
   @@map("synced_logs")
+}
+
+model ForumThread {
+  id             String      @id @default(cuid())
+  title          String
+  authorUsername String      @map("author_username")
+  authorId       String      @map("author_id")
+  content        String
+  imageUrls      String[]    @default([]) @map("image_urls")
+  stackPeptides  Json?       @map("stack_peptides")
+  tags           String[]    @default([])
+  upvotes        Int         @default(0)
+  downvotes      Int         @default(0)
+  replyCount     Int         @default(0) @map("reply_count")
+  viewCount      Int         @default(0) @map("view_count")
+  isPinned       Boolean     @default(false) @map("is_pinned")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  posts          ForumPost[]
+  votes          ForumVote[]
+
+  @@index([createdAt])
+  @@index([tags])
+  @@index([isPinned])
+  @@map("forum_threads")
+}
+
+model ForumPost {
+  id             String      @id @default(cuid())
+  threadId       String      @map("thread_id")
+  authorUsername String      @map("author_username")
+  authorId       String      @map("author_id")
+  content        String
+  imageUrls      String[]    @default([]) @map("image_urls")
+  parentPostId   String?     @map("parent_post_id")
+  upvotes        Int         @default(0)
+  downvotes      Int         @default(0)
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  parentPost     ForumPost?  @relation("PostReplies", fields: [parentPostId], references: [id], onDelete: Cascade)
+  replies        ForumPost[] @relation("PostReplies")
+  thread         ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  votes          ForumVote[]
+
+  @@index([threadId])
+  @@index([parentPostId])
+  @@index([createdAt])
+  @@map("forum_posts")
+}
+
+model ForumVote {
+  id             String       @id @default(cuid())
+  targetId       String       @map("target_id")
+  targetType     String       @map("target_type")
+  userIdentifier String       @map("user_identifier")
+  voteType       String       @map("vote_type")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  threadId       String?      @map("thread_id")
+  postId         String?      @map("post_id")
+  post           ForumPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  thread         ForumThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@unique([targetId, userIdentifier])
+  @@index([targetId, targetType])
+  @@map("forum_votes")
 }

@@ -98,4 +98,59 @@ export interface SafetyCheck {
   peptideIds?: string[];
 }
 
-export type ViewMode = 'dashboard' | 'add-stack' | 'my-list' | 'calculator' | 'calendar' | 'protocol' | 'community' | 'settings';
+export type ViewMode = 'dashboard' | 'add-stack' | 'my-list' | 'calculator' | 'calendar' | 'protocol' | 'community' | 'settings' | 'sys';
+
+// Forum Thread - for SYS (Share Your Stack) forum
+export interface ForumThread {
+  id: string;
+  title: string;
+  authorUsername: string;
+  authorId: string; // hashed IP or user identifier
+  content: string;
+  imageUrls?: string[];
+  stackPeptides?: StackPeptideInfo[]; // peptides in the shared stack
+  tags?: string[];
+  upvotes: number;
+  downvotes: number;
+  replyCount: number;
+  viewCount: number;
+  isPinned?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Peptide info in a shared stack
+export interface StackPeptideInfo {
+  peptideName: string;
+  dosage: number;
+  dosageUnit: 'mcg' | 'mg';
+  frequency: string;
+  timeOfDay?: string;
+  duration?: string;
+  notes?: string;
+}
+
+// Forum Post - replies to threads
+export interface ForumPost {
+  id: string;
+  threadId: string;
+  authorUsername: string;
+  authorId: string;
+  content: string;
+  imageUrls?: string[];
+  parentPostId?: string; // for nested replies
+  upvotes: number;
+  downvotes: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Forum Vote
+export interface ForumVote {
+  id: string;
+  targetId: string; // thread or post ID
+  targetType: 'thread' | 'post';
+  userIdentifier: string;
+  voteType: 'upvote' | 'downvote';
+  createdAt: Date;
+}

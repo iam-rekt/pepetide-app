@@ -1,6 +1,6 @@
 'use client';
 
-import { Home, Calculator, Calendar, Clock, Users, Sparkles, List, Settings } from 'lucide-react';
+import { Home, Calculator, Calendar, Clock, Users, Sparkles, List, Settings, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { ViewMode } from '@/types';
 
@@ -18,6 +18,7 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     { id: 'calculator' as ViewMode, label: 'Calc', icon: Calculator },
     { id: 'calendar' as ViewMode, label: 'Calendar', icon: Calendar },
     { id: 'community' as ViewMode, label: 'Community', icon: Users },
+    { id: 'sys' as ViewMode, label: 'SYS', icon: MessageSquare },
     { id: 'settings' as ViewMode, label: 'Settings', icon: Settings },
   ];
 
