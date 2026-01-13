@@ -101,14 +101,14 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => handleAddOption('protocol')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
                 <Clock className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">Protocol</span>
               </button>
               <button
                 onClick={() => handleAddOption('my-list')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
                 <List className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">List</span>
@@ -125,15 +125,22 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
           <div className="md:hidden fixed bottom-[5rem] right-[16.666%] z-50 animate-in slide-in-from-bottom-2 duration-200">
             <div className="flex flex-col gap-2">
               <button
+                disabled
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-lg opacity-60 cursor-not-allowed"
+              >
+                <Sparkles className="w-6 h-6" />
+                <span className="text-[9px] mt-0.5 font-medium">Vendors</span>
+              </button>
+              <button
                 onClick={() => handleCommunityOption('sys')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
                 <MessageSquare className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">SYS</span>
               </button>
               <button
                 onClick={() => handleCommunityOption('community')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
                 <Users className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">Stacks</span>
@@ -161,10 +168,10 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
                 onClick={() => handleMobileClick(item)}
                 className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg min-w-[44px] flex-1 transition-all ${isActive
                   ? isHighlight
-                    ? 'text-white bg-gradient-to-r from-cyan-500 to-blue-600'
-                    : 'text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/50'
+                    ? 'text-white bg-gradient-to-r from-slate-700 to-slate-900'
+                    : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/50'
                   : isHighlight
-                    ? 'text-cyan-600 dark:text-cyan-400'
+                    ? 'text-slate-700 dark:text-slate-400'
                     : 'text-slate-500 dark:text-slate-400'
                   }`}
               >
