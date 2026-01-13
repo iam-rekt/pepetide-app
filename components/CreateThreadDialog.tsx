@@ -138,6 +138,11 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
         if (uploadResponse.ok) {
           const { urls } = await uploadResponse.json();
           imageUrls = urls;
+          console.log('Images uploaded successfully:', urls);
+        } else {
+          const errorData = await uploadResponse.json();
+          console.error('Image upload failed:', errorData);
+          alert(`Image upload failed: ${errorData.error || 'Unknown error'}. Thread will be created without images.`);
         }
       }
 

@@ -187,6 +187,11 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
         if (uploadResponse.ok) {
           const { urls } = await uploadResponse.json();
           imageUrls = urls;
+          console.log('Images uploaded successfully:', urls);
+        } else {
+          const errorData = await uploadResponse.json();
+          console.error('Image upload failed:', errorData);
+          alert(`Image upload failed: ${errorData.error || 'Unknown error'}. Reply will be posted without images.`);
         }
       }
 
@@ -379,13 +384,12 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
             >
               <ArrowUp className="w-6 h-6" />
             </button>
-            <span className={`text-lg font-bold ${
-              (threadVotes.up - threadVotes.down) > 0
+            <span className={`text-lg font-bold ${(threadVotes.up - threadVotes.down) > 0
                 ? 'text-green-600 dark:text-green-400'
                 : (threadVotes.up - threadVotes.down) < 0
-                ? 'text-red-600 dark:text-red-400'
-                : 'text-slate-500'
-            }`}>
+                  ? 'text-red-600 dark:text-red-400'
+                  : 'text-slate-500'
+              }`}>
               {threadVotes.up - threadVotes.down}
             </span>
             <button
