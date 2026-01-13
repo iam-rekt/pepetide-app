@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { put } from '@vercel/blob';
 
 // POST - Upload images for forum posts
 export async function POST(request: NextRequest) {
@@ -21,12 +19,6 @@ export async function POST(request: NextRequest) {
         { error: 'Maximum 4 images allowed' },
         { status: 400 }
       );
-    }
-
-    // Create uploads directory if it doesn't exist
-    const uploadDir = join(process.cwd(), 'public', 'uploads', 'forum');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
     }
 
     const urls: string[] = [];
@@ -52,16 +44,15 @@ export async function POST(request: NextRequest) {
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(2, 15);
       const ext = image.name.split('.').pop();
-      const filename = `${timestamp}-${randomStr}.${ext}`;
+      const filename = `forum/${timestamp}-${randomStr}.${ext}`;
 
-      // Save file
-      const bytes = await image.arrayBuffer();
-      const buffer = Buffer.from(bytes);
-      const filepath = join(uploadDir, filename);
-      await writeFile(filepath, buffer);
+      // Upload to Vercel Blob
+      const blob = await put(filename, image, {
+        access: 'public',
+      });
 
       // Add URL to array
-      urls.push(`/uploads/forum/${filename}`);
+      urls.push(blob.url);
     }
 
     return NextResponse.json({ urls });
