@@ -326,14 +326,23 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
 
               {/* Images */}
               {post.imageUrls && post.imageUrls.length > 0 && (
-                <div className="grid grid-cols-2 gap-2 mt-2">
+                <div className="flex flex-col gap-2 mt-2">
                   {post.imageUrls.map((url, idx) => (
-                    <img
+                    <a
                       key={idx}
-                      src={url}
-                      alt={`Attachment ${idx + 1}`}
-                      className="w-full max-h-48 object-contain rounded bg-slate-100 dark:bg-slate-800"
-                    />
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block"
+                    >
+                      <img
+                        src={url}
+                        alt={`Attachment ${idx + 1}`}
+                        className="max-w-full h-auto rounded border border-slate-200 dark:border-slate-700 hover:opacity-90 cursor-pointer"
+                        style={{ maxHeight: '300px' }}
+                        loading="lazy"
+                      />
+                    </a>
                   ))}
                 </div>
               )}
@@ -451,14 +460,23 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
 
             {/* Thread images */}
             {thread.imageUrls && thread.imageUrls.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="flex flex-col gap-2 mt-4">
                 {thread.imageUrls.map((url, idx) => (
-                  <img
+                  <a
                     key={idx}
-                    src={url}
-                    alt={`Attachment ${idx + 1}`}
-                    className="w-full max-h-64 object-contain rounded bg-slate-100 dark:bg-slate-800"
-                  />
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block"
+                  >
+                    <img
+                      src={url}
+                      alt={`Attachment ${idx + 1}`}
+                      className="max-w-full h-auto rounded border border-slate-200 dark:border-slate-700 hover:opacity-90 cursor-pointer"
+                      style={{ maxHeight: '400px' }}
+                      loading="lazy"
+                    />
+                  </a>
                 ))}
               </div>
             )}
