@@ -162,6 +162,11 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
     });
   };
 
+  const handleRemoveImage = (index: number) => {
+    setImages(images.filter((_, i) => i !== index));
+    setImagePreviews(imagePreviews.filter((_, i) => i !== index));
+  };
+
   const handleSubmitReply = async () => {
     if (!replyContent.trim() || !replyUsername.trim()) {
       alert('Please fill in username and content');
@@ -385,10 +390,10 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
               <ArrowUp className="w-6 h-6" />
             </button>
             <span className={`text-lg font-bold ${(threadVotes.up - threadVotes.down) > 0
-                ? 'text-green-600 dark:text-green-400'
-                : (threadVotes.up - threadVotes.down) < 0
-                  ? 'text-red-600 dark:text-red-400'
-                  : 'text-slate-500'
+              ? 'text-green-600 dark:text-green-400'
+              : (threadVotes.up - threadVotes.down) < 0
+                ? 'text-red-600 dark:text-red-400'
+                : 'text-slate-500'
               }`}>
               {threadVotes.up - threadVotes.down}
             </span>
@@ -539,11 +544,21 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
             />
           </div>
 
+
           {/* Image previews */}
           {imagePreviews.length > 0 && (
             <div className="grid grid-cols-4 gap-2">
               {imagePreviews.map((preview, idx) => (
-                <img key={idx} src={preview} alt={`Preview ${idx + 1}`} className="w-full h-20 object-cover rounded" />
+                <div key={idx} className="relative">
+                  <img src={preview} alt={`Preview ${idx + 1}`} className="w-full h-20 object-cover rounded" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(idx)}
+                    className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold"
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           )}
