@@ -332,7 +332,7 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
                       key={idx}
                       src={url}
                       alt={`Attachment ${idx + 1}`}
-                      className="w-full h-32 object-cover rounded"
+                      className="w-full max-h-48 object-contain rounded bg-slate-100 dark:bg-slate-800"
                     />
                   ))}
                 </div>
@@ -457,7 +457,7 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
                     key={idx}
                     src={url}
                     alt={`Attachment ${idx + 1}`}
-                    className="w-full h-48 object-cover rounded"
+                    className="w-full max-h-64 object-contain rounded bg-slate-100 dark:bg-slate-800"
                   />
                 ))}
               </div>

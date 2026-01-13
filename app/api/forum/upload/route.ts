@@ -96,29 +96,29 @@ export async function POST(request: NextRequest) {
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
-      // Compress image aggressively using sharp
-      // - Resize to max 1200px width
-      // - Convert to WebP format (70-90% smaller)
-      // - Quality 75
+      // Compress image using sharp
+      // - Resize to max 1200px width (maintains aspect ratio)
+      // - Convert to JPEG format (better compatibility than WebP)
+      // - Quality 80
       console.log('[Upload API] Compressing with Sharp...');
       const compressedBuffer = await sharp(buffer)
         .resize(1200, null, {
           withoutEnlargement: true,
           fit: 'inside'
         })
-        .webp({ quality: 75 })
+        .jpeg({ quality: 80 })
         .toBuffer();
       console.log(`[Upload API] Compressed to ${compressedBuffer.length} bytes`);
 
       // Generate unique filename
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(2, 15);
-      const filename = `${timestamp}-${randomStr}.webp`;
+      const filename = `${timestamp}-${randomStr}.jpg`;
 
       // Upload to IPFS via Storacha
       // Create a File object from the buffer (convert Buffer to Uint8Array for proper typing)
       const uint8Array = new Uint8Array(compressedBuffer);
-      const file = new File([uint8Array], filename, { type: 'image/webp' });
+      const file = new File([uint8Array], filename, { type: 'image/jpeg' });
 
       // Upload to IPFS
       console.log(`[Upload API] Uploading ${filename} to IPFS...`);
