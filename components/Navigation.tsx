@@ -93,66 +93,54 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
         })}
       </nav>
 
-      {/* Add Menu Modal */}
+      {/* Add Menu Dropdown - slides up from button */}
       {showAddMenu && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setShowAddMenu(false)}>
-          <div className="fixed bottom-16 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 space-y-2">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Add New</h3>
-              <button
-                onClick={() => handleAddOption('my-list')}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              >
-                <List className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                <div className="text-left">
-                  <div className="font-medium text-slate-900 dark:text-white">List</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Add peptide to library</div>
-                </div>
-              </button>
+        <>
+          <div className="md:hidden fixed inset-0 z-50" onClick={() => setShowAddMenu(false)} />
+          <div className="md:hidden fixed bottom-[5rem] left-[16.666%] z-50 animate-in slide-in-from-bottom-2 duration-200">
+            <div className="flex flex-col gap-2">
               <button
                 onClick={() => handleAddOption('protocol')}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
-                <Clock className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                <div className="text-left">
-                  <div className="font-medium text-slate-900 dark:text-white">Protocol</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Create new protocol</div>
-                </div>
+                <Clock className="w-6 h-6" />
+                <span className="text-[9px] mt-0.5 font-medium">Protocol</span>
+              </button>
+              <button
+                onClick={() => handleAddOption('my-list')}
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <List className="w-6 h-6" />
+                <span className="text-[9px] mt-0.5 font-medium">List</span>
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
 
-      {/* Community Menu Modal */}
+      {/* Community Menu Dropdown - slides up from button */}
       {showCommunityMenu && (
-        <div className="md:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm" onClick={() => setShowCommunityMenu(false)}>
-          <div className="fixed bottom-16 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="p-4 space-y-2">
-              <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Community</h3>
-              <button
-                onClick={() => handleCommunityOption('community')}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-              >
-                <Users className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                <div className="text-left">
-                  <div className="font-medium text-slate-900 dark:text-white">Stacks</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Browse community peptide stacks</div>
-                </div>
-              </button>
+        <>
+          <div className="md:hidden fixed inset-0 z-50" onClick={() => setShowCommunityMenu(false)} />
+          <div className="md:hidden fixed bottom-[5rem] right-[16.666%] z-50 animate-in slide-in-from-bottom-2 duration-200">
+            <div className="flex flex-col gap-2">
               <button
                 onClick={() => handleCommunityOption('sys')}
-                className="w-full flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
-                <MessageSquare className="w-5 h-5 text-cyan-600 dark:text-cyan-400" />
-                <div className="text-left">
-                  <div className="font-medium text-slate-900 dark:text-white">SYS Forum</div>
-                  <div className="text-xs text-slate-500 dark:text-slate-400">Share Your Stack discussions</div>
-                </div>
+                <MessageSquare className="w-6 h-6" />
+                <span className="text-[9px] mt-0.5 font-medium">SYS</span>
+              </button>
+              <button
+                onClick={() => handleCommunityOption('community')}
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <Users className="w-6 h-6" />
+                <span className="text-[9px] mt-0.5 font-medium">Stacks</span>
               </button>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Mobile Bottom Navigation - Simplified with dropdowns */}
