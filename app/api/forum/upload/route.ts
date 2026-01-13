@@ -90,9 +90,9 @@ export async function POST(request: NextRequest) {
       const filename = `${timestamp}-${randomStr}.webp`;
 
       // Upload to IPFS via Storacha
-      // Create a File object from the buffer (convert Buffer to Blob first)
-      const blob = new Blob([compressedBuffer], { type: 'image/webp' });
-      const file = new File([blob], filename, { type: 'image/webp' });
+      // Create a File object from the buffer (convert Buffer to Uint8Array for proper typing)
+      const uint8Array = new Uint8Array(compressedBuffer);
+      const file = new File([uint8Array], filename, { type: 'image/webp' });
 
       // Upload to IPFS
       const cid = await client.uploadFile(file);
