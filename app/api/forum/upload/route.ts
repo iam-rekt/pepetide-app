@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { put } from '@vercel/blob';
+import sharp from 'sharp';
 
-// POST - Upload images for forum posts
+// POST - Upload images for forum posts with aggressive compression
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -32,7 +33,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Validate file size (max 5MB)
+      // Validate file size (max 5MB before compression)
       if (image.size > 5 * 1024 * 1024) {
         return NextResponse.json(
           { error: 'Image size must be less than 5MB' },
@@ -40,15 +41,32 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Generate unique filename
+      // Convert image to buffer
+      const bytes = await image.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+
+      // Compress image aggressively using sharp
+      // - Resize to max 1200px width (good for forum posts)
+      // - Convert to WebP format (much smaller than JPEG/PNG)
+      // - Quality 75 (good balance between size and quality)
+      // This typically reduces size by 70-90%
+      const compressedBuffer = await sharp(buffer)
+        .resize(1200, null, {
+          withoutEnlargement: true, // Don't upscale smaller images
+          fit: 'inside'
+        })
+        .webp({ quality: 75 })
+        .toBuffer();
+
+      // Generate unique filename with .webp extension
       const timestamp = Date.now();
       const randomStr = Math.random().toString(36).substring(2, 15);
-      const ext = image.name.split('.').pop();
-      const filename = `forum/${timestamp}-${randomStr}.${ext}`;
+      const filename = `forum/${timestamp}-${randomStr}.webp`;
 
-      // Upload to Vercel Blob
-      const blob = await put(filename, image, {
+      // Upload compressed image to Vercel Blob
+      const blob = await put(filename, compressedBuffer, {
         access: 'public',
+        contentType: 'image/webp'
       });
 
       // Add URL to array
