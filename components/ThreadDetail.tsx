@@ -15,6 +15,8 @@ interface ThreadDetailProps {
   onBack: () => void;
 }
 
+type PostWithChildren = ForumPost & { children: PostWithChildren[] };
+
 export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,9 +256,9 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
     return `${Math.floor(seconds / 2592000)}mo ago`;
   };
 
-  const buildPostTree = (posts: ForumPost[]) => {
-    const postMap = new Map<string, ForumPost & { children: ForumPost[] }>();
-    const rootPosts: (ForumPost & { children: ForumPost[] })[] = [];
+  const buildPostTree = (posts: ForumPost[]): PostWithChildren[] => {
+    const postMap = new Map<string, PostWithChildren>();
+    const rootPosts: PostWithChildren[] = [];
 
     // Create map of posts with children array
     posts.forEach(post => {
@@ -281,7 +283,7 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
     return rootPosts;
   };
 
-  const renderPost = (post: ForumPost & { children: ForumPost[] }, depth: number = 0) => {
+  const renderPost = (post: PostWithChildren, depth: number = 0) => {
     return (
       <div key={post.id} className={`${depth > 0 ? 'ml-8 mt-2' : 'mt-3'}`}>
         <Card className="p-3">
