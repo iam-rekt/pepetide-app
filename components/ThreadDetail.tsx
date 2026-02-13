@@ -10,6 +10,15 @@ import type { ForumThread, ForumPost, StackPeptideInfo } from '@/types';
 import { hashIP } from '@/lib/hash';
 import { addPeptide, addVial } from '@/lib/db';
 
+// Rewrite old w3s.link gateway URLs to storacha.link (w3s.link is dead)
+function fixIpfsUrl(url: string): string {
+  if (url.includes('w3s.link/ipfs/')) {
+    const cid = url.split('w3s.link/ipfs/')[1];
+    return `https://${cid}.ipfs.storacha.link`;
+  }
+  return url;
+}
+
 interface ThreadDetailProps {
   thread: ForumThread;
   onBack: () => void;
@@ -327,23 +336,26 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
               {/* Images */}
               {post.imageUrls && post.imageUrls.length > 0 && (
                 <div className="flex flex-col gap-2 mt-2">
-                  {post.imageUrls.map((url, idx) => (
+                  {post.imageUrls.map((url, idx) => {
+                    const imgUrl = fixIpfsUrl(url);
+                    return (
                     <a
                       key={idx}
-                      href={url}
+                      href={imgUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="block"
                     >
                       <img
-                        src={url}
+                        src={imgUrl}
                         alt={`Attachment ${idx + 1}`}
                         className="max-w-full h-auto rounded border border-slate-200 dark:border-slate-700 hover:opacity-90 cursor-pointer"
                         style={{ maxHeight: '300px' }}
                         loading="lazy"
                       />
                     </a>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
@@ -461,23 +473,26 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
             {/* Thread images */}
             {thread.imageUrls && thread.imageUrls.length > 0 && (
               <div className="flex flex-col gap-2 mt-4">
-                {thread.imageUrls.map((url, idx) => (
+                {thread.imageUrls.map((url, idx) => {
+                  const imgUrl = fixIpfsUrl(url);
+                  return (
                   <a
                     key={idx}
-                    href={url}
+                    href={imgUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block"
                   >
                     <img
-                      src={url}
+                      src={imgUrl}
                       alt={`Attachment ${idx + 1}`}
                       className="max-w-full h-auto rounded border border-slate-200 dark:border-slate-700 hover:opacity-90 cursor-pointer"
                       style={{ maxHeight: '400px' }}
                       loading="lazy"
                     />
                   </a>
-                ))}
+                  );
+                })}
               </div>
             )}
 

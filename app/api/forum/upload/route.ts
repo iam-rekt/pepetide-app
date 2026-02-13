@@ -126,8 +126,8 @@ export async function POST(request: NextRequest) {
       console.log(`[Upload API] Upload successful! CID: ${cid}`);
 
       // Generate IPFS gateway URL
-      // Using w3s.link gateway (Storacha's public gateway)
-      const ipfsUrl = `https://w3s.link/ipfs/${cid}`;
+      // Using storacha.link gateway (Storacha's current public gateway)
+      const ipfsUrl = `https://${cid}.ipfs.storacha.link`;
       console.log(`[Upload API] Gateway URL: ${ipfsUrl}`);
 
       urls.push(ipfsUrl);
