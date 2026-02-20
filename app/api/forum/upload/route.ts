@@ -125,12 +125,12 @@ export async function POST(request: NextRequest) {
       const cid = await client.uploadFile(file);
       console.log(`[Upload API] Upload successful! CID: ${cid}`);
 
-      // Generate IPFS gateway URL
-      // Using storacha.link gateway (Storacha's current public gateway)
-      const ipfsUrl = `https://${cid}.ipfs.storacha.link`;
-      console.log(`[Upload API] Gateway URL: ${ipfsUrl}`);
+      // Store canonical URI instead of gateway-specific URL.
+      // This keeps records portable even if a gateway goes down/changes.
+      const ipfsUri = `ipfs://${cid}`;
+      console.log(`[Upload API] Canonical URI: ${ipfsUri}`);
 
-      urls.push(ipfsUrl);
+      urls.push(ipfsUri);
     }
 
     return NextResponse.json({ urls });

@@ -10,13 +10,59 @@ import type { ForumThread, ForumPost, StackPeptideInfo } from '@/types';
 import { hashIP } from '@/lib/hash';
 import { addPeptide, addVial } from '@/lib/db';
 
-// Rewrite old w3s.link gateway URLs to storacha.link (w3s.link is dead)
-function fixIpfsUrl(url: string): string {
-  if (url.includes('w3s.link/ipfs/')) {
-    const cid = url.split('w3s.link/ipfs/')[1];
-    return `https://${cid}.ipfs.storacha.link`;
+function extractIpfsCid(url: string): string | null {
+  if (!url) return null;
+
+  if (url.startsWith('ipfs://')) {
+    return url.replace('ipfs://', '').replace(/^ipfs\//, '').split('/')[0];
   }
-  return url;
+
+  const subdomainMatch = url.match(/^https?:\/\/([a-z0-9]+)\.ipfs\./i);
+  if (subdomainMatch?.[1]) return subdomainMatch[1];
+
+  const pathMatch = url.match(/\/ipfs\/([a-z0-9]+)/i);
+  if (pathMatch?.[1]) return pathMatch[1];
+
+  return null;
+}
+
+function getImageCandidates(url: string): string[] {
+  const cid = extractIpfsCid(url);
+  if (!cid) return [url];
+
+  return [
+    `https://ipfs.io/ipfs/${cid}`,
+    `https://cloudflare-ipfs.com/ipfs/${cid}`,
+    `https://${cid}.ipfs.storacha.link`
+  ];
+}
+
+function IpfsImage({ url, alt, maxHeight }: { url: string; alt: string; maxHeight: string }) {
+  const candidates = getImageCandidates(url);
+  const [index, setIndex] = useState(0);
+  const current = candidates[Math.min(index, candidates.length - 1)];
+
+  return (
+    <a
+      href={current}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block"
+    >
+      <img
+        src={current}
+        alt={alt}
+        onError={() => {
+          if (index < candidates.length - 1) {
+            setIndex((prev) => prev + 1);
+          }
+        }}
+        className="max-w-full h-auto rounded border border-slate-200 dark:border-slate-700 hover:opacity-90 cursor-pointer"
+        style={{ maxHeight }}
+        loading="lazy"
+      />
+    </a>
+  );
 }
 
 interface ThreadDetailProps {
@@ -337,23 +383,13 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
               {post.imageUrls && post.imageUrls.length > 0 && (
                 <div className="flex flex-col gap-2 mt-2">
                   {post.imageUrls.map((url, idx) => {
-                    const imgUrl = fixIpfsUrl(url);
                     return (
-                    <a
+                    <IpfsImage
                       key={idx}
-                      href={imgUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block"
-                    >
-                      <img
-                        src={imgUrl}
-                        alt={`Attachment ${idx + 1}`}
-                        className="max-w-full h-auto rounded border border-slate-200 dark:border-slate-700 hover:opacity-90 cursor-pointer"
-                        style={{ maxHeight: '300px' }}
-                        loading="lazy"
-                      />
-                    </a>
+                      url={url}
+                      alt={`Attachment ${idx + 1}`}
+                      maxHeight="300px"
+                    />
                     );
                   })}
                 </div>
@@ -474,23 +510,13 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
             {thread.imageUrls && thread.imageUrls.length > 0 && (
               <div className="flex flex-col gap-2 mt-4">
                 {thread.imageUrls.map((url, idx) => {
-                  const imgUrl = fixIpfsUrl(url);
                   return (
-                  <a
+                  <IpfsImage
                     key={idx}
-                    href={imgUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block"
-                  >
-                    <img
-                      src={imgUrl}
-                      alt={`Attachment ${idx + 1}`}
-                      className="max-w-full h-auto rounded border border-slate-200 dark:border-slate-700 hover:opacity-90 cursor-pointer"
-                      style={{ maxHeight: '400px' }}
-                      loading="lazy"
-                    />
-                  </a>
+                    url={url}
+                    alt={`Attachment ${idx + 1}`}
+                    maxHeight="400px"
+                  />
                   );
                 })}
               </div>
