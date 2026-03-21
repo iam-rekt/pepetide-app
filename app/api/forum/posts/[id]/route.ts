@@ -46,6 +46,27 @@ export async function DELETE(
       );
     }
 
+    const threadPosts = await prisma.forumPost.findMany({
+      where: { threadId: post.threadId },
+      select: { id: true, parentPostId: true }
+    });
+
+    const deletedPostIds = new Set<string>([id]);
+    let hasNewDescendants = true;
+
+    while (hasNewDescendants) {
+      hasNewDescendants = false;
+
+      for (const threadPost of threadPosts) {
+        if (threadPost.parentPostId && deletedPostIds.has(threadPost.parentPostId) && !deletedPostIds.has(threadPost.id)) {
+          deletedPostIds.add(threadPost.id);
+          hasNewDescendants = true;
+        }
+      }
+    }
+
+    const deletedCount = deletedPostIds.size;
+
     // Delete the post (cascade will delete child replies and votes)
     await prisma.forumPost.delete({
       where: { id }
@@ -54,10 +75,15 @@ export async function DELETE(
     // Decrement thread reply count
     await prisma.forumThread.update({
       where: { id: post.threadId },
-      data: { replyCount: { decrement: 1 } }
+      data: { replyCount: { decrement: deletedCount } }
     });
 
-    return NextResponse.json({ success: true, message: 'Post deleted' });
+    return NextResponse.json({
+      success: true,
+      message: 'Post deleted',
+      deletedCount,
+      deletedPostIds: Array.from(deletedPostIds)
+    });
   } catch (error) {
     console.error('Error deleting post:', error);
     return NextResponse.json(

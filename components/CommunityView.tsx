@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Database, ExternalLink, Server } from 'lucide-react';
+import { Server } from 'lucide-react';
 import CommunityBrowser from './CommunityBrowser';
 import PeptideDetail from './PeptideDetail';
 import SubmitPeptideForm from './SubmitPeptideForm';
+import SubmitReviewForm from './SubmitReviewForm';
 import { addPeptide } from '@/lib/db';
 
 // Types for community peptides (matching API response)
@@ -55,37 +55,15 @@ export default function CommunityView() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Server className="w-5 h-5" />
-            Database Not Connected
+            Community Unavailable
           </CardTitle>
           <CardDescription>
-            Connect a PostgreSQL database to enable community features
+            Threads and shared peptide data are unavailable right now
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            The community peptide database requires a PostgreSQL database (we recommend Railway). This allows users to share peptide information anonymously.
-          </p>
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="font-semibold mb-2">Quick Setup with Railway (5 minutes)</h4>
-            <ol className="list-decimal list-inside space-y-1 text-sm">
-              <li>Create a free Railway account at railway.app</li>
-              <li>Create a new PostgreSQL database</li>
-              <li>Copy the DATABASE_URL connection string</li>
-              <li>Add it to your .env file</li>
-              <li>Run <code className="bg-slate-100 dark:bg-slate-800 px-1 rounded">npx prisma migrate dev</code></li>
-              <li>Restart the dev server</li>
-            </ol>
-          </div>
-          <div className="flex gap-2">
-            <Button asChild>
-              <a href="https://railway.app" target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="w-4 h-4 mr-2" />
-                Get Started with Railway
-              </a>
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Don't want community features? All personal tracking features work without a database connection.
+            Personal tracking still works locally on this device. Community features come back automatically when shared data is available again.
           </p>
         </CardContent>
       </Card>
@@ -155,11 +133,11 @@ export default function CommunityView() {
       )}
 
       {viewMode === 'review' && selectedPeptide && (
-        <div>
-          {/* Review form would go here - simplified for now */}
-          <p>Review form coming soon</p>
-          <button onClick={() => setViewMode('detail')}>Back to Detail</button>
-        </div>
+        <SubmitReviewForm
+          peptide={selectedPeptide}
+          onBack={() => setViewMode('detail')}
+          onSuccess={() => setViewMode('detail')}
+        />
       )}
     </div>
   );

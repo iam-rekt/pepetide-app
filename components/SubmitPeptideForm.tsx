@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, Plus, X } from 'lucide-react';
+import {
+  clearPeptideSubmissionDraft,
+  loadCommunityAlias,
+  loadPeptideSubmissionDraft,
+  saveCommunityAlias,
+  savePeptideSubmissionDraft,
+} from '@/lib/community-storage';
 
 interface SubmitPeptideFormProps {
   onBack: () => void;
@@ -28,6 +35,66 @@ export default function SubmitPeptideForm({ onBack, onSuccess }: SubmitPeptideFo
   const [notes, setNotes] = useState('');
   const [source, setSource] = useState('personal-experience');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const savedDraft = loadPeptideSubmissionDraft();
+    const savedAlias = loadCommunityAlias();
+
+    setUsername(savedDraft.username || savedAlias);
+    setName(savedDraft.name);
+    setDescription(savedDraft.description);
+    setDosageMin(savedDraft.dosageMin);
+    setDosageMax(savedDraft.dosageMax);
+    setDosageUnit(savedDraft.dosageUnit);
+    setBenefits(savedDraft.benefits);
+    setContraindications(savedDraft.contraindications);
+    setWarnings(savedDraft.warnings);
+    setStorageInstructions(savedDraft.storageInstructions);
+    setUnreconShelfLife(savedDraft.unreconShelfLife);
+    setReconShelfLife(savedDraft.reconShelfLife);
+    setNotes(savedDraft.notes);
+    setSource(savedDraft.source);
+  }, []);
+
+  useEffect(() => {
+    savePeptideSubmissionDraft({
+      username,
+      name,
+      description,
+      dosageMin,
+      dosageMax,
+      dosageUnit,
+      benefits,
+      contraindications,
+      warnings,
+      storageInstructions,
+      unreconShelfLife: unreconShelfLife,
+      reconShelfLife,
+      notes,
+      source,
+    });
+  }, [
+    username,
+    name,
+    description,
+    dosageMin,
+    dosageMax,
+    dosageUnit,
+    benefits,
+    contraindications,
+    warnings,
+    storageInstructions,
+    unreconShelfLife,
+    reconShelfLife,
+    notes,
+    source,
+  ]);
+
+  useEffect(() => {
+    if (username.trim()) {
+      saveCommunityAlias(username);
+    }
+  }, [username]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +130,8 @@ export default function SubmitPeptideForm({ onBack, onSuccess }: SubmitPeptideFo
       const data = await response.json();
 
       if (response.ok) {
+        saveCommunityAlias(username);
+        clearPeptideSubmissionDraft();
         alert(data.isNew ? 'New peptide submitted successfully!' : 'Your submission has been added to this peptide!');
         onSuccess();
       } else {
@@ -87,7 +156,7 @@ export default function SubmitPeptideForm({ onBack, onSuccess }: SubmitPeptideFo
         <CardHeader>
           <CardTitle>Submit Peptide to Community Database</CardTitle>
           <CardDescription>
-            Share your knowledge with the community. Your submission will be publicly visible and attributed to your username.
+            Share useful information under an alias. Your alias and draft stay saved only on this device.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -104,7 +173,7 @@ export default function SubmitPeptideForm({ onBack, onSuccess }: SubmitPeptideFo
                 className="mt-2"
               />
               <p className="text-xs text-muted-foreground mt-1">
-                This will be publicly visible. Use a pseudonym if you prefer privacy.
+                This alias is publicly visible on the submission. Use a pseudonym if you want to stay anonymous.
               </p>
             </div>
 

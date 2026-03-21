@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, ThumbsUp, ThumbsDown, Users, Eye, MessageSquare, TrendingUp } from 'lucide-react';
+import { Search, ThumbsUp, ThumbsDown, Users, Eye, TrendingUp } from 'lucide-react';
 import type { CommunityPeptide } from './CommunityView';
 
 interface CommunityBrowserProps {
@@ -19,11 +19,7 @@ export default function CommunityBrowser({ onSelectPeptide, onSubmitNew, onDatab
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('upvotes');
 
-  useEffect(() => {
-    loadPeptides();
-  }, [sortBy, search]);
-
-  async function loadPeptides() {
+  const loadPeptides = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -51,7 +47,11 @@ export default function CommunityBrowser({ onSelectPeptide, onSubmitNew, onDatab
     } finally {
       setLoading(false);
     }
-  }
+  }, [onDatabaseError, search, sortBy]);
+
+  useEffect(() => {
+    void loadPeptides();
+  }, [loadPeptides]);
 
   const handleVote = async (peptideId: string, voteType: 'upvote' | 'downvote') => {
     try {
@@ -77,7 +77,7 @@ export default function CommunityBrowser({ onSelectPeptide, onSubmitNew, onDatab
             <div>
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5" />
-                Community Peptide Database
+                Peptide Database
               </CardTitle>
               <CardDescription>
                 Browse peptides submitted by the community. Data is user-contributed.

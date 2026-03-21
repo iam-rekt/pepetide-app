@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const isAdmin = request.headers.get('x-admin-key') === process.env.ADMIN_KEY;
     const threads = await prisma.forumThread.findMany({
+      where: isAdmin ? undefined : { isHidden: false },
       orderBy: [
         { isPinned: 'desc' },
         { createdAt: 'desc' }

@@ -6,10 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import { X, Plus, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Upload } from 'lucide-react';
 import type { ForumThread, StackPeptideInfo, DoseProtocol } from '@/types';
 import { getProtocols } from '@/lib/db';
-import { hashIP } from '@/lib/hash';
+import {
+  clearThreadComposerDraft,
+  consumePreparedThreadDraft,
+  loadCommunityAlias,
+  loadThreadComposerDraft,
+  saveCommunityAlias,
+  saveThreadComposerDraft,
+} from '@/lib/community-storage';
 
 interface CreateThreadDialogProps {
   onClose: () => void;
@@ -22,6 +29,8 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
   const [username, setUsername] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [stackPeptides, setStackPeptides] = useState<StackPeptideInfo[]>([]);
+  const [sourceLabel, setSourceLabel] = useState('');
+  const [templateKind, setTemplateKind] = useState<'stack' | 'question' | 'update'>('stack');
   const [myProtocols, setMyProtocols] = useState<DoseProtocol[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [imagePrews, setImagePreviews] = useState<string[]>([]);
@@ -31,12 +40,36 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
 
   useEffect(() => {
     loadMyProtocols();
-    // Load saved username from localStorage
-    const savedUsername = localStorage.getItem('forumUsername');
-    if (savedUsername) {
-      setUsername(savedUsername);
-    }
+
+    const preparedDraft = consumePreparedThreadDraft();
+    const savedDraft = preparedDraft || loadThreadComposerDraft();
+    const savedUsername = loadCommunityAlias();
+
+    setUsername(savedUsername);
+    setTitle(savedDraft.title);
+    setContent(savedDraft.content);
+    setSelectedTags(savedDraft.tags);
+    setStackPeptides(savedDraft.stackPeptides);
+    setSourceLabel(savedDraft.sourceLabel || '');
+    setTemplateKind(savedDraft.templateKind || 'stack');
   }, []);
+
+  useEffect(() => {
+    saveThreadComposerDraft({
+      title,
+      content,
+      tags: selectedTags,
+      stackPeptides,
+      sourceLabel,
+      templateKind,
+    });
+  }, [title, content, selectedTags, stackPeptides, sourceLabel, templateKind]);
+
+  useEffect(() => {
+    if (username.trim()) {
+      saveCommunityAlias(username);
+    }
+  }, [username]);
 
   const loadMyProtocols = async () => {
     const protocols = await getProtocols();
@@ -72,7 +105,7 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
     setStackPeptides(stackPeptides.filter((_, i) => i !== index));
   };
 
-  const handleUpdatePeptide = (index: number, field: keyof StackPeptideInfo, value: any) => {
+  const handleUpdatePeptide = (index: number, field: keyof StackPeptideInfo, value: StackPeptideInfo[keyof StackPeptideInfo]) => {
     const updated = [...stackPeptides];
     updated[index] = { ...updated[index], [field]: value };
     setStackPeptides(updated);
@@ -119,8 +152,7 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
     setSubmitting(true);
 
     try {
-      // Save username for next time
-      localStorage.setItem('forumUsername', username);
+      saveCommunityAlias(username);
 
       // Upload images if any
       let imageUrls: string[] = [];
@@ -162,6 +194,7 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
 
       if (response.ok) {
         const newThread = await response.json();
+        clearThreadComposerDraft();
         onThreadCreated(newThread);
       } else {
         throw new Error('Failed to create thread');
@@ -174,14 +207,125 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
     }
   };
 
+  const dialogTitle =
+    templateKind === 'question'
+      ? 'Ask a Question'
+      : templateKind === 'update'
+      ? 'Post an Update'
+      : 'Share Your Stack';
+  const templateDescription =
+    templateKind === 'question'
+      ? 'Use this when you want feedback, troubleshooting, or opinions from the community.'
+      : templateKind === 'update'
+      ? 'Use this for follow-ups, progress notes, or changes since your last post.'
+      : 'Use this when the main value is sharing a stack or tracked setup.';
+
+  const titleLabel = templateKind === 'question' ? 'Question Title' : 'Thread Title';
+  const titlePlaceholder =
+    templateKind === 'question'
+      ? 'e.g., Thoughts on this recovery stack?'
+      : templateKind === 'update'
+      ? 'e.g., Progress update - week 3'
+      : 'e.g., My cutting stack - BPC-157 + CJC/Ipamorelin';
+  const contentLabel =
+    templateKind === 'question'
+      ? 'Question / Context'
+      : templateKind === 'update'
+      ? 'Update / Notes'
+      : 'Description / Experience';
+  const contentPlaceholder =
+    templateKind === 'question'
+      ? 'Share your question, what you have tried, and what feedback you want...'
+      : templateKind === 'update'
+      ? 'Share what changed, what you noticed, and what kind of feedback you want...'
+      : 'Share your experience, goals, results, etc...';
+  const stackLabel = templateKind === 'stack' ? 'Your Stack' : 'Related Stack';
+  const submitLabel =
+    templateKind === 'question'
+      ? 'Post Question'
+      : templateKind === 'update'
+      ? 'Post Update'
+      : 'Post Thread';
+
+  const applyTemplateKind = (nextKind: 'stack' | 'question' | 'update') => {
+    setTemplateKind(nextKind);
+
+    if (title.trim() || content.trim()) {
+      return;
+    }
+
+    if (nextKind === 'question') {
+      setTitle('Need feedback on my current stack');
+      setContent([
+        'Question for the community:',
+        '- ',
+        '',
+        'Current context:',
+        '- ',
+        '',
+        'What I have tried so far:',
+        '- ',
+      ].join('\n'));
+      return;
+    }
+
+    if (nextKind === 'update') {
+      setTitle(`Progress update - ${new Date().toLocaleDateString()}`);
+      setContent([
+        'Quick update:',
+        '- ',
+        '',
+        'What changed:',
+        '- ',
+        '',
+        'What I noticed:',
+        '- ',
+      ].join('\n'));
+      return;
+    }
+
+    setTitle('');
+    setContent('');
+  };
+
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Share Your Stack</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
+          {sourceLabel && (
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-800 dark:border-cyan-900/50 dark:bg-cyan-950/20 dark:text-cyan-200">
+              {sourceLabel}. Review anything you want before posting.
+            </div>
+          )}
+
+          <div>
+            <Label>Thread Type</Label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {([
+                { id: 'question', label: 'Question' },
+                { id: 'update', label: 'Update' },
+                { id: 'stack', label: 'Stack' },
+              ] as const).map((option) => (
+                <Button
+                  key={option.id}
+                  type="button"
+                  variant={templateKind === option.id ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => applyTemplateKind(option.id)}
+                >
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              {templateDescription}
+            </p>
+          </div>
+
           {/* Username */}
           <div>
             <Label htmlFor="username">Username / Alias</Label>
@@ -193,18 +337,18 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
               className="mt-1"
             />
             <p className="text-xs text-slate-500 mt-1">
-              Choose a memorable alias. Your posts will be associated with this name.
+              Use any alias you want. Your alias and thread draft are only saved locally on this device.
             </p>
           </div>
 
           {/* Title */}
           <div>
-            <Label htmlFor="title">Thread Title</Label>
+            <Label htmlFor="title">{titleLabel}</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., My cutting stack - BPC-157 + CJC/Ipamorelin"
+              placeholder={titlePlaceholder}
               className="mt-1"
             />
           </div>
@@ -229,12 +373,12 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
 
           {/* Content */}
           <div>
-            <Label htmlFor="content">Description / Experience</Label>
+            <Label htmlFor="content">{contentLabel}</Label>
             <textarea
               id="content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Share your experience, goals, results, etc..."
+              placeholder={contentPlaceholder}
               className="mt-1 w-full min-h-[120px] px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white resize-y"
             />
           </div>
@@ -242,7 +386,7 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
           {/* Stack Peptides */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label>Your Stack</Label>
+              <Label>{stackLabel}</Label>
               <div className="flex gap-2">
                 {myProtocols.length > 0 && (
                   <select
@@ -268,7 +412,7 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
 
             {stackPeptides.length === 0 ? (
               <p className="text-sm text-slate-500 italic">
-                No peptides added yet. Add peptides to share your stack details.
+                No peptides added yet. Stack details are optional, but they make threads much easier to browse and import.
               </p>
             ) : (
               <div className="space-y-2">
@@ -379,7 +523,7 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Posting...' : 'Post Thread'}
+            {submitting ? 'Posting...' : submitLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -151,6 +151,8 @@ model ForumThread {
   replyCount     Int         @default(0) @map("reply_count")
   viewCount      Int         @default(0) @map("view_count")
   isPinned       Boolean     @default(false) @map("is_pinned")
+  isHidden       Boolean     @default(false) @map("is_hidden")
+  isLocked       Boolean     @default(false) @map("is_locked")
   createdAt      DateTime    @default(now()) @map("created_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
   posts          ForumPost[]
@@ -159,6 +161,8 @@ model ForumThread {
   @@index([createdAt])
   @@index([tags])
   @@index([isPinned])
+  @@index([isHidden])
+  @@index([isLocked])
   @@map("forum_threads")
 }
 

@@ -1,23 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar, Plus, ArrowLeft, Check, Zap, Info } from 'lucide-react';
+import { Calendar, ArrowLeft, Check, Zap, Info, MessageSquare } from 'lucide-react';
 import { getPeptides, getActiveVials, addProtocol, addDoseLog } from '@/lib/db';
 import { syncData } from '@/lib/sync';
-import type { Peptide, PeptideVial } from '@/types';
+import type { Peptide, PeptideVial, StackPeptideInfo, ViewMode } from '@/types';
 import { addDays, startOfToday } from 'date-fns';
+import { queuePreparedThreadDraft } from '@/lib/community-storage';
+import { buildThreadDraftFromStackPeptides } from '@/lib/thread-sharing';
 
 interface ProtocolBuilderProps {
   onComplete: () => void;
+  onNavigate?: (view: ViewMode) => void;
   preSelectedVialId?: string; // Optional: auto-select this vial
 }
 
-export default function ProtocolBuilder({ onComplete, preSelectedVialId }: ProtocolBuilderProps) {
+export default function ProtocolBuilder({ onComplete, onNavigate, preSelectedVialId }: ProtocolBuilderProps) {
   const [peptides, setPeptides] = useState<Peptide[]>([]);
   const [vials, setVials] = useState<PeptideVial[]>([]);
   const [selectedVialId, setSelectedVialId] = useState('');
@@ -29,11 +32,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
   const [startDate, setStartDate] = useState(startOfToday().toISOString().split('T')[0]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     const [allPeptides, activeVials] = await Promise.all([
       getPeptides(),
       getActiveVials(),
@@ -53,10 +52,47 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
       );
       setSelectedVialId(sortedVials[0].id);
     }
-  }
+  }, [preSelectedVialId]);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const selectedVial = vials.find(v => v.id === selectedVialId);
   const selectedPeptide = selectedVial ? peptides.find(p => p.id === selectedVial.peptideId) : null;
+
+  const buildCurrentStackDraft = (): StackPeptideInfo[] => {
+    if (!selectedPeptide || !targetDose) {
+      return [];
+    }
+
+    return [{
+      peptideName: selectedPeptide.name,
+      dosage: parseFloat(targetDose),
+      dosageUnit: targetDoseUnit,
+      frequency: frequency === 'every-other-day' ? 'every other day' : frequency,
+      timeOfDay,
+      duration: `${durationWeeks} weeks`,
+      notes: '',
+    }];
+  };
+
+  const handleSharePlannedStack = () => {
+    const stackPeptides = buildCurrentStackDraft();
+
+    if (stackPeptides.length === 0) {
+      alert('Add a dose and protocol details before sharing this plan.');
+      return;
+    }
+
+    queuePreparedThreadDraft(
+      buildThreadDraftFromStackPeptides(stackPeptides, 'Sharing a planned stack I am setting up in the app.')
+    );
+
+    if (onNavigate) {
+      onNavigate('sys');
+    }
+  };
 
   const handleCreateProtocol = async () => {
     if (!selectedPeptide || !selectedVial || !targetDose) {
@@ -154,7 +190,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
             <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
               <h4 className="font-semibold mb-2">Quick Start:</h4>
               <ol className="list-decimal list-inside space-y-1 text-sm">
-                <li>Go to "Add Stack"</li>
+                <li>Go to &quot;Add Stack&quot;</li>
                 <li>Create your first peptide + vial</li>
                 <li>Return here to build your dosing protocol</li>
               </ol>
@@ -274,7 +310,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
           <CardHeader>
             <CardTitle>Protocol Configuration</CardTitle>
             <CardDescription>
-              Set your dosing schedule and we'll auto-populate your calendar
+              Set your dosing schedule and we&apos;ll auto-populate your calendar
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -347,7 +383,7 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
                 <select
                   id="frequency"
                   value={frequency}
-                  onChange={(e) => setFrequency(e.target.value as any)}
+                  onChange={(e) => setFrequency(e.target.value as 'daily' | 'every-other-day' | 'weekly')}
                   className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="daily">Every Day</option>
@@ -413,18 +449,30 @@ export default function ProtocolBuilder({ onComplete, preSelectedVialId }: Proto
               </motion.div>
             )}
 
-            <Button
-              onClick={handleCreateProtocol}
-              disabled={loading || !targetDose || !selectedVialId}
-              className="w-full h-14 text-lg bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black dark:from-slate-200 dark:to-slate-100 dark:hover:from-slate-100 dark:hover:to-white dark:text-slate-900"
-            >
-              {loading ? 'Creating Protocol...' : (
-                <>
-                  <Check className="w-5 h-5 mr-2" />
-                  Create Protocol & Schedule {totalDoses} Doses
-                </>
-              )}
-            </Button>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleSharePlannedStack}
+                disabled={!targetDose || !selectedVialId}
+                className="h-14 text-base sm:flex-1"
+              >
+                <MessageSquare className="mr-2 h-5 w-5" />
+                Share This Plan in Threads
+              </Button>
+              <Button
+                onClick={handleCreateProtocol}
+                disabled={loading || !targetDose || !selectedVialId}
+                className="h-14 text-lg bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-900 hover:to-black dark:from-slate-200 dark:to-slate-100 dark:hover:from-slate-100 dark:hover:to-white dark:text-slate-900 sm:flex-[1.35]"
+              >
+                {loading ? 'Creating Protocol...' : (
+                  <>
+                    <Check className="w-5 h-5 mr-2" />
+                    Create Protocol & Schedule {totalDoses} Doses
+                  </>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </motion.div>

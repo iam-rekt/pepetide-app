@@ -13,6 +13,26 @@ export async function GET(
 
   try {
     const { id } = await params;
+    const isAdmin = request.headers.get('x-admin-key') === process.env.ADMIN_KEY;
+
+    const thread = await prisma.forumThread.findUnique({
+      where: { id },
+      select: { isHidden: true }
+    });
+
+    if (!thread) {
+      return NextResponse.json(
+        { error: 'Thread not found' },
+        { status: 404 }
+      );
+    }
+
+    if (thread.isHidden && !isAdmin) {
+      return NextResponse.json(
+        { error: 'Thread not found' },
+        { status: 404 }
+      );
+    }
 
     const posts = await prisma.forumPost.findMany({
       where: { threadId: id },
@@ -56,6 +76,32 @@ export async function POST(
     // Get user identifier (hash IP for privacy)
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const authorId = await hashIP(ip);
+
+    const thread = await prisma.forumThread.findUnique({
+      where: { id },
+      select: { isLocked: true, isHidden: true }
+    });
+
+    if (!thread) {
+      return NextResponse.json(
+        { error: 'Thread not found' },
+        { status: 404 }
+      );
+    }
+
+    if (thread.isHidden) {
+      return NextResponse.json(
+        { error: 'Thread not found' },
+        { status: 404 }
+      );
+    }
+
+    if (thread.isLocked) {
+      return NextResponse.json(
+        { error: 'Thread is locked' },
+        { status: 423 }
+      );
+    }
 
     const newPost = await prisma.forumPost.create({
       data: {

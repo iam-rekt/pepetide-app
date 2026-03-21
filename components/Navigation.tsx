@@ -21,8 +21,8 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     { id: 'protocol' as ViewMode, label: 'Protocol', icon: Clock },
     { id: 'calculator' as ViewMode, label: 'Calc', icon: Calculator },
     { id: 'calendar' as ViewMode, label: 'Calendar', icon: Calendar },
-    { id: 'community' as ViewMode, label: 'Community', icon: Users },
-    { id: 'sys' as ViewMode, label: 'SYS', icon: MessageSquare },
+    { id: 'sys' as ViewMode, label: 'Threads', icon: MessageSquare },
+    { id: 'community' as ViewMode, label: 'Peptides', icon: Users },
     { id: 'settings' as ViewMode, label: 'Settings', icon: Settings },
   ];
 
@@ -32,7 +32,7 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     { id: 'add' as const, label: 'Add', icon: Plus, highlight: true, isMenu: true },
     { id: 'calculator' as ViewMode, label: 'Calc', icon: Calculator },
     { id: 'calendar' as ViewMode, label: 'Calendar', icon: Calendar },
-    { id: 'community' as const, label: 'Community', icon: Users, isMenu: true },
+    { id: 'threads' as const, label: 'Threads', icon: MessageSquare, isMenu: true },
     { id: 'settings' as ViewMode, label: 'Settings', icon: Settings },
   ];
 
@@ -40,7 +40,7 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     if (item.id === 'add') {
       setShowAddMenu(true);
       setShowCommunityMenu(false);
-    } else if (item.id === 'community') {
+    } else if (item.id === 'threads') {
       setShowCommunityMenu(true);
       setShowAddMenu(false);
     } else {
@@ -50,7 +50,7 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     }
   };
 
-  const handleAddOption = (view: 'my-list' | 'protocol') => {
+  const handleAddOption = (view: 'add-stack' | 'my-list' | 'protocol') => {
     onViewChange(view);
     setShowAddMenu(false);
   };
@@ -100,6 +100,13 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
           <div className="md:hidden fixed bottom-[5rem] left-[16.666%] z-50 animate-in slide-in-from-bottom-2 duration-200">
             <div className="flex flex-col gap-2">
               <button
+                onClick={() => handleAddOption('add-stack')}
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+              >
+                <Sparkles className="w-6 h-6" />
+                <span className="text-[9px] mt-0.5 font-medium">Stack</span>
+              </button>
+              <button
                 onClick={() => handleAddOption('protocol')}
                 className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
@@ -118,32 +125,25 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
         </>
       )}
 
-      {/* Community Menu Dropdown - slides up from button */}
+      {/* Threads Menu Dropdown - slides up from button */}
       {showCommunityMenu && (
         <>
           <div className="md:hidden fixed inset-0 z-50" onClick={() => setShowCommunityMenu(false)} />
           <div className="md:hidden fixed bottom-[5rem] right-[16.666%] z-50 animate-in slide-in-from-bottom-2 duration-200">
             <div className="flex flex-col gap-2">
               <button
-                disabled
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-400 to-slate-500 text-white shadow-lg opacity-60 cursor-not-allowed"
-              >
-                <Sparkles className="w-6 h-6" />
-                <span className="text-[9px] mt-0.5 font-medium">Vendors</span>
-              </button>
-              <button
                 onClick={() => handleCommunityOption('sys')}
                 className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
                 <MessageSquare className="w-6 h-6" />
-                <span className="text-[9px] mt-0.5 font-medium">SYS</span>
+                <span className="text-[9px] mt-0.5 font-medium">Threads</span>
               </button>
               <button
                 onClick={() => handleCommunityOption('community')}
                 className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
               >
                 <Users className="w-6 h-6" />
-                <span className="text-[9px] mt-0.5 font-medium">Stacks</span>
+                <span className="text-[9px] mt-0.5 font-medium">Peptides</span>
               </button>
             </div>
           </div>

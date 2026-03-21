@@ -3,16 +3,22 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CheckCircle2, Circle, XCircle, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle2, Circle, XCircle, Trash2, MessageSquare } from 'lucide-react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, startOfToday } from 'date-fns';
-import { getDoseLogs, getPeptides, updateDoseLog, deleteProtocol } from '@/lib/db';
+import { getDoseLogs, getProtocols, updateDoseLog, deleteProtocol } from '@/lib/db';
 import { syncData } from '@/lib/sync';
-import type { DoseLog, Peptide } from '@/types';
+import type { DoseLog, DoseProtocol, ViewMode } from '@/types';
+import { queuePreparedThreadDraft } from '@/lib/community-storage';
+import { buildProgressUpdateDraftFromLogs } from '@/lib/thread-sharing';
 
-export default function CalendarView() {
+interface CalendarViewProps {
+  onNavigate?: (view: ViewMode) => void;
+}
+
+export default function CalendarView({ onNavigate }: CalendarViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [doseLogs, setDoseLogs] = useState<DoseLog[]>([]);
-  const [peptides, setPeptides] = useState<Peptide[]>([]);
+  const [protocols, setProtocols] = useState<DoseProtocol[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -22,12 +28,12 @@ export default function CalendarView() {
 
   async function loadData() {
     try {
-      const [logs, allPeptides] = await Promise.all([
+      const [logs, allProtocols] = await Promise.all([
         getDoseLogs(),
-        getPeptides(),
+        getProtocols(),
       ]);
       setDoseLogs(logs);
-      setPeptides(allPeptides);
+      setProtocols(allProtocols);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -45,6 +51,25 @@ export default function CalendarView() {
       const logDate = new Date(log.scheduledDate);
       return isSameDay(logDate, date);
     });
+  };
+
+  const handleShareSelectedDay = () => {
+    if (!selectedDate || selectedDateLogs.length === 0) {
+      return;
+    }
+
+    queuePreparedThreadDraft(
+      buildProgressUpdateDraftFromLogs(
+        selectedDateLogs,
+        protocols,
+        selectedDate,
+        'Sharing a daily progress update from my tracker.'
+      )
+    );
+
+    if (onNavigate) {
+      onNavigate('sys');
+    }
   };
 
   // Get status for a date
@@ -227,16 +252,26 @@ export default function CalendarView() {
       {/* Selected Date Details */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a Date'}
-          </CardTitle>
-          <CardDescription>
-            {selectedDate
-              ? selectedDateLogs.length > 0
-                ? `${selectedDateLogs.length} dose${selectedDateLogs.length > 1 ? 's' : ''} scheduled`
-                : 'No doses scheduled'
-              : 'Click a date to view details'}
-          </CardDescription>
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <CardTitle>
+                {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Select a Date'}
+              </CardTitle>
+              <CardDescription>
+                {selectedDate
+                  ? selectedDateLogs.length > 0
+                    ? `${selectedDateLogs.length} dose${selectedDateLogs.length > 1 ? 's' : ''} scheduled`
+                    : 'No doses scheduled'
+                  : 'Click a date to view details'}
+              </CardDescription>
+            </div>
+            {selectedDate && selectedDateLogs.length > 0 && onNavigate && (
+              <Button variant="outline" size="sm" onClick={handleShareSelectedDay}>
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Share Day
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {selectedDateLogs.length > 0 ? (

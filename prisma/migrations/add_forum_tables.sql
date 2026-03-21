@@ -15,6 +15,8 @@ CREATE TABLE IF NOT EXISTS "forum_threads" (
     "reply_count" INTEGER NOT NULL DEFAULT 0,
     "view_count" INTEGER NOT NULL DEFAULT 0,
     "is_pinned" BOOLEAN NOT NULL DEFAULT false,
+    "is_hidden" BOOLEAN NOT NULL DEFAULT false,
+    "is_locked" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -54,6 +56,8 @@ CREATE TABLE IF NOT EXISTS "forum_votes" (
 CREATE INDEX IF NOT EXISTS "forum_threads_created_at_idx" ON "forum_threads"("created_at");
 CREATE INDEX IF NOT EXISTS "forum_threads_tags_idx" ON "forum_threads"("tags");
 CREATE INDEX IF NOT EXISTS "forum_threads_is_pinned_idx" ON "forum_threads"("is_pinned");
+CREATE INDEX IF NOT EXISTS "forum_threads_is_hidden_idx" ON "forum_threads"("is_hidden");
+CREATE INDEX IF NOT EXISTS "forum_threads_is_locked_idx" ON "forum_threads"("is_locked");
 
 CREATE INDEX IF NOT EXISTS "forum_posts_thread_id_idx" ON "forum_posts"("thread_id");
 CREATE INDEX IF NOT EXISTS "forum_posts_parent_post_id_idx" ON "forum_posts"("parent_post_id");

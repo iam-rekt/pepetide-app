@@ -2,6 +2,64 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma, isDatabaseConfigured } from '@/lib/db-postgres';
 import { hashIP } from '@/lib/hash';
 
+// PATCH - Admin moderation controls for a thread
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!isDatabaseConfigured) {
+    return NextResponse.json(
+      { error: 'Database not configured' },
+      { status: 503 }
+    );
+  }
+
+  try {
+    const isAdmin = request.headers.get('x-admin-key') === process.env.ADMIN_KEY;
+
+    if (!isAdmin) {
+      return NextResponse.json(
+        { error: 'Unauthorized - admin key required' },
+        { status: 403 }
+      );
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { isPinned, isHidden, isLocked } = body;
+
+    const data: {
+      isPinned?: boolean;
+      isHidden?: boolean;
+      isLocked?: boolean;
+    } = {};
+
+    if (typeof isPinned === 'boolean') data.isPinned = isPinned;
+    if (typeof isHidden === 'boolean') data.isHidden = isHidden;
+    if (typeof isLocked === 'boolean') data.isLocked = isLocked;
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json(
+        { error: 'No moderation changes provided' },
+        { status: 400 }
+      );
+    }
+
+    const updatedThread = await prisma.forumThread.update({
+      where: { id },
+      data
+    });
+
+    return NextResponse.json(updatedThread);
+  } catch (error) {
+    console.error('Error moderating thread:', error);
+    return NextResponse.json(
+      { error: 'Failed to moderate thread', details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE - Delete a thread (by author or admin)
 export async function DELETE(
   request: NextRequest,

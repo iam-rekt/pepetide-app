@@ -115,6 +115,8 @@ export interface ForumThread {
   replyCount: number;
   viewCount: number;
   isPinned?: boolean;
+  isHidden?: boolean;
+  isLocked?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }

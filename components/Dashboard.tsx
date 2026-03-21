@@ -6,13 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import {
   AlertCircle, CheckCircle2, Clock, TrendingUp, Sparkles,
-  Calendar, Calculator, ArrowRight, Zap
+  Calendar, Calculator, ArrowRight, Zap, MessageSquare
 } from 'lucide-react';
 import { getPeptides, getActiveVials, getActiveProtocols, getDoseLogs } from '@/lib/db';
-import { syncData } from '@/lib/sync';
 import { getAllSafetyChecks } from '@/lib/safety';
 import type { Peptide, PeptideVial, DoseProtocol, DoseLog, ViewMode, SafetyCheck } from '@/types';
 import { format } from 'date-fns';
+import DashboardThreadsPreview from './DashboardThreadsPreview';
+import { queuePreparedThreadDraft } from '@/lib/community-storage';
+import { buildProgressUpdateDraftFromLogs, buildThreadDraftFromProtocols } from '@/lib/thread-sharing';
 
 interface DashboardProps {
   onNavigate: (view: ViewMode) => void;
@@ -75,6 +77,35 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     ? Math.round((stats.completedToday / stats.todayDoses) * 100)
     : 0;
 
+  const handleShareActiveStack = () => {
+    if (protocols.length === 0) {
+      onNavigate('sys');
+      return;
+    }
+
+    queuePreparedThreadDraft(
+      buildThreadDraftFromProtocols(protocols, 'Sharing the active stack I am currently tracking in the app.')
+    );
+    onNavigate('sys');
+  };
+
+  const handleShareTodayUpdate = () => {
+    if (todayLogs.length === 0) {
+      onNavigate('sys');
+      return;
+    }
+
+    queuePreparedThreadDraft(
+      buildProgressUpdateDraftFromLogs(
+        todayLogs,
+        protocols,
+        new Date(),
+        'Posting a progress update from today in my tracker.'
+      )
+    );
+    onNavigate('sys');
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -130,7 +161,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   <div className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-cyan-500 to-blue-600 dark:from-cyan-400 dark:to-blue-500 bg-clip-text text-transparent drop-shadow-lg">
                     {completionRate}%
                   </div>
-                  <div className="text-xs text-cyan-600 dark:text-cyan-400 font-semibold">Today's Progress</div>
+                  <div className="text-xs text-cyan-600 dark:text-cyan-400 font-semibold">Today&apos;s Progress</div>
                 </motion.div>
               )}
             </div>
@@ -243,7 +274,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                 {[
                   {
                     title: 'Add New Stack',
@@ -269,6 +300,22 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                     gradient: 'from-purple-500 to-pink-600',
                     glow: 'from-purple-500/20 to-pink-500/20'
                   },
+                  ...(protocols.length > 0 ? [{
+                    title: 'Share Active Stack',
+                    desc: 'Prefill a thread from tracked protocols',
+                    icon: MessageSquare,
+                    action: 'share-active-stack',
+                    gradient: 'from-cyan-500 to-blue-600',
+                    glow: 'from-cyan-500/20 to-blue-500/20'
+                  }] : []),
+                  ...(todayLogs.length > 0 ? [{
+                    title: 'Share Today Update',
+                    desc: 'Turn today’s tracked progress into a thread',
+                    icon: TrendingUp,
+                    action: 'share-today-update',
+                    gradient: 'from-emerald-500 to-teal-600',
+                    glow: 'from-emerald-500/20 to-teal-500/20'
+                  }] : []),
                 ].map((action, index) => {
                   const Icon = action.icon;
                   return (
@@ -279,7 +326,19 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                       transition={{ delay: 0.7 + index * 0.1 }}
                     >
                       <button
-                        onClick={() => onNavigate(action.action as ViewMode)}
+                        onClick={() => {
+                          if (action.action === 'share-active-stack') {
+                            handleShareActiveStack();
+                            return;
+                          }
+
+                          if (action.action === 'share-today-update') {
+                            handleShareTodayUpdate();
+                            return;
+                          }
+
+                          onNavigate(action.action as ViewMode);
+                        }}
                         className="relative group w-full text-left p-6 rounded-xl bg-white/5 dark:bg-slate-950/5 backdrop-blur-sm border border-white/20 dark:border-slate-600/30 hover:border-white/40 dark:hover:border-slate-500/50 shadow-lg transition-all duration-300 overflow-hidden"
                       >
                         <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${action.glow}`} />
@@ -303,6 +362,14 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         </Card>
       </motion.div>
 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.75 }}
+      >
+        <DashboardThreadsPreview onNavigate={onNavigate} />
+      </motion.div>
+
       {/* Today's Schedule */}
       {todayLogs.length > 0 && (
         <motion.div
@@ -312,7 +379,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         >
           <Card className="bg-white/5 dark:bg-slate-900/5 backdrop-blur-sm border-white/20 dark:border-slate-700/30">
             <CardHeader>
-              <CardTitle>Today's Schedule</CardTitle>
+              <CardTitle>Today&apos;s Schedule</CardTitle>
               <CardDescription>{format(new Date(), 'EEEE, MMMM d, yyyy')}</CardDescription>
             </CardHeader>
             <CardContent>
