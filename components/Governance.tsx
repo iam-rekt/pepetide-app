@@ -7,6 +7,7 @@ import {
   MoleculeIcon,
   VialIcon,
   ScrollIcon,
+  SyringeIcon,
   TrendIcon,
   GearIcon,
   DropletIcon,
@@ -63,13 +64,18 @@ const PILLARS = [
   },
   {
     icon: ScrollIcon,
-    title: 'Stake to curate',
-    body: 'Lock $PEPETIDE to boost threads, endorse protocols, and earn extra weight on votes. Tokens never burn — they unlock after the lockup.',
+    title: 'Stake to earn protocol revenue',
+    body: 'Lock $PEPETIDE to receive a share of the revenue the protocol generates — research partnerships, premium tooling fees, treasury yield. Tokens never burn while staked; they unlock after the lockup.',
   },
   {
     icon: TrendIcon,
     title: 'Treasury funds peptide R&D',
-    body: 'The treasury bankrolls new peptide ideas and pushes peptide science forward — research grants, lab partnerships, expert AMAs. Revenue generated from that work is shared back to $PEPETIDE holders.',
+    body: 'The treasury bankrolls new peptide ideas and pushes peptide science forward — research grants, lab partnerships, expert AMAs. Revenue generated from that work flows back to $PEPETIDE holders.',
+  },
+  {
+    icon: SyringeIcon,
+    title: 'Buybacks & burns',
+    body: 'A portion of protocol revenue is used to buy $PEPETIDE off the open market and burn it. Tightens supply for holders and turns project growth into ongoing token-side value.',
   },
   {
     icon: ChatIcon,
