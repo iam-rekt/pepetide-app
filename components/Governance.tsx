@@ -101,7 +101,7 @@ export default function Governance() {
             v2 preview
           </span>
           <span className="text-xs font-mono text-slate-800 dark:text-slate-300 font-semibold">
-            voting opens at token launch
+            
           </span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-black tracking-tight bg-gradient-to-br from-emerald-400 via-green-500 to-lime-500 bg-clip-text text-transparent mb-2">
@@ -109,7 +109,7 @@ export default function Governance() {
         </h1>
         <p className="text-sm sm:text-base text-slate-900 dark:text-slate-100 font-medium max-w-2xl">
           $PEPETIDE holders steer the protocol. Vote on the peptide catalog, moderation rules,
-          treasury spend, and stake parameters. No accounts, no KYC — just hold the token in
+          treasury spend, and stake to earn. No accounts, no KYC — just hold the token in
           your Solana wallet.
         </p>
       </motion.div>
@@ -133,7 +133,7 @@ export default function Governance() {
               key={stat.label}
               className="p-4 bg-white/5 dark:bg-slate-900/5 backdrop-blur-sm rounded-xl border border-white/20 dark:border-slate-600/30"
             >
-              <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${stat.gradient} mb-2 shadow-lg`}>
+              <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${stat.gradient} mb-2 shadow-md ring-1 ring-white/30 dark:ring-white/10 backdrop-blur-sm opacity-75`}>
                 <Icon className="w-4 h-4 text-white" />
               </div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</div>
@@ -268,7 +268,7 @@ export default function Governance() {
                 className="rounded-xl border border-white/15 dark:border-slate-700/40 bg-white/10 dark:bg-slate-900/20 backdrop-blur-sm p-5"
               >
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-lime-500 shadow-md shadow-emerald-500/30 ring-1 ring-white/20">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-lime-500 shadow-md shadow-emerald-500/30 ring-1 ring-white/30 dark:ring-white/10 backdrop-blur-sm opacity-75">
                     <Icon className="w-4 h-4 text-white" />
                   </div>
                   <div>
