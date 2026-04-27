@@ -88,20 +88,6 @@ export default function AdminPanel() {
         </div>
       )}
 
-      <div className="mt-6 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-lg">
-        <h3 className="font-semibold text-sm text-slate-900 dark:text-white mb-2">
-          Setting up the admin key
-        </h3>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mb-2">
-          To set up admin authentication, add this to your <code className="bg-slate-200 dark:bg-slate-700 px-1 rounded">.env.local</code> file:
-        </p>
-        <code className="block text-xs bg-slate-100 dark:bg-slate-900 p-2 rounded font-mono">
-          ADMIN_KEY="your-secret-admin-key-here"
-        </code>
-        <p className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-          Generate a strong random key and keep it secret. Anyone with this key can moderate the forum.
-        </p>
-      </div>
     </Card>
   );
 }
