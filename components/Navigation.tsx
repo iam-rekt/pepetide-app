@@ -1,7 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, Calculator, Calendar, Clock, Users, Sparkles, List, Settings, MessageSquare, Plus } from 'lucide-react';
+import {
+  HomeIcon,
+  PlusVialIcon,
+  VialIcon,
+  ScrollIcon,
+  BeakerIcon,
+  CalendarIcon,
+  ChatIcon,
+  MoleculeIcon,
+  GearIcon,
+} from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import type { ViewMode } from '@/types';
 
@@ -15,25 +25,25 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
   const [showCommunityMenu, setShowCommunityMenu] = useState(false);
 
   const navItems = [
-    { id: 'dashboard' as ViewMode, label: 'Home', icon: Home },
-    { id: 'add-stack' as ViewMode, label: 'Add', icon: Sparkles, highlight: true },
-    { id: 'my-list' as ViewMode, label: 'List', icon: List },
-    { id: 'protocol' as ViewMode, label: 'Protocol', icon: Clock },
-    { id: 'calculator' as ViewMode, label: 'Calc', icon: Calculator },
-    { id: 'calendar' as ViewMode, label: 'Calendar', icon: Calendar },
-    { id: 'sys' as ViewMode, label: 'Threads', icon: MessageSquare },
-    { id: 'community' as ViewMode, label: 'Peptides', icon: Users },
-    { id: 'settings' as ViewMode, label: 'Settings', icon: Settings },
+    { id: 'dashboard' as ViewMode, label: 'Home', icon: HomeIcon },
+    { id: 'add-stack' as ViewMode, label: 'Add', icon: PlusVialIcon, highlight: true },
+    { id: 'my-list' as ViewMode, label: 'List', icon: VialIcon },
+    { id: 'protocol' as ViewMode, label: 'Protocol', icon: ScrollIcon },
+    { id: 'calculator' as ViewMode, label: 'Calc', icon: BeakerIcon },
+    { id: 'calendar' as ViewMode, label: 'Calendar', icon: CalendarIcon },
+    { id: 'sys' as ViewMode, label: 'Threads', icon: ChatIcon },
+    { id: 'community' as ViewMode, label: 'Peptides', icon: MoleculeIcon },
+    { id: 'settings' as ViewMode, label: 'Settings', icon: GearIcon },
   ];
 
   // Mobile-only nav items (simplified)
   const mobileNavItems = [
-    { id: 'dashboard' as ViewMode, label: 'Home', icon: Home },
-    { id: 'add' as const, label: 'Add', icon: Plus, highlight: true, isMenu: true },
-    { id: 'calculator' as ViewMode, label: 'Calc', icon: Calculator },
-    { id: 'calendar' as ViewMode, label: 'Calendar', icon: Calendar },
-    { id: 'threads' as const, label: 'Threads', icon: MessageSquare, isMenu: true },
-    { id: 'settings' as ViewMode, label: 'Settings', icon: Settings },
+    { id: 'dashboard' as ViewMode, label: 'Home', icon: HomeIcon },
+    { id: 'add' as const, label: 'Add', icon: PlusVialIcon, highlight: true, isMenu: true },
+    { id: 'calculator' as ViewMode, label: 'Calc', icon: BeakerIcon },
+    { id: 'calendar' as ViewMode, label: 'Calendar', icon: CalendarIcon },
+    { id: 'threads' as const, label: 'Threads', icon: ChatIcon, isMenu: true },
+    { id: 'settings' as ViewMode, label: 'Settings', icon: GearIcon },
   ];
 
   const handleMobileClick = (item: typeof mobileNavItems[number]) => {
@@ -75,14 +85,11 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
               variant={isActive ? 'default' : 'outline'}
               size="sm"
               onClick={() => onViewChange(item.id)}
-              className={`flex items-center gap-2 backdrop-blur-md ${isActive
-                ? 'bg-slate-900/90 dark:bg-white/90 border-slate-700 dark:border-slate-300'
+              className={`flex items-center gap-2 backdrop-blur-md transition-all ${isActive
+                ? 'bg-gradient-to-r from-emerald-500 to-lime-500 text-white border-emerald-400 shadow-lg shadow-emerald-500/30 hover:from-emerald-600 hover:to-lime-600'
                 : 'bg-white/70 dark:bg-slate-900/70 border-slate-300 dark:border-slate-700'
                 } ${isHighlight && !isActive
-                  ? 'border-cyan-300 dark:border-cyan-700 hover:bg-white/80 dark:hover:bg-slate-900/80'
-                  : ''
-                } ${isActive && isHighlight
-                  ? 'bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/30 border-cyan-400'
+                  ? 'border-emerald-300 dark:border-emerald-700 hover:bg-white/80 dark:hover:bg-slate-900/80'
                   : ''
                 }`}
             >
@@ -101,23 +108,23 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => handleAddOption('add-stack')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-lime-500 text-white shadow-lg shadow-emerald-500/40 ring-1 ring-white/30 hover:shadow-xl transition-all hover:scale-105"
               >
-                <Sparkles className="w-6 h-6" />
+                <PlusVialIcon className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">Stack</span>
               </button>
               <button
                 onClick={() => handleAddOption('protocol')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-white/20 hover:shadow-xl transition-all hover:scale-105"
               >
-                <Clock className="w-6 h-6" />
+                <ScrollIcon className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">Protocol</span>
               </button>
               <button
                 onClick={() => handleAddOption('my-list')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-lime-600 to-emerald-700 text-white shadow-lg shadow-lime-600/30 ring-1 ring-white/20 hover:shadow-xl transition-all hover:scale-105"
               >
-                <List className="w-6 h-6" />
+                <VialIcon className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">List</span>
               </button>
             </div>
@@ -133,16 +140,16 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
             <div className="flex flex-col gap-2">
               <button
                 onClick={() => handleCommunityOption('sys')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-500 to-lime-500 text-white shadow-lg shadow-emerald-500/40 ring-1 ring-white/30 hover:shadow-xl transition-all hover:scale-105"
               >
-                <MessageSquare className="w-6 h-6" />
+                <ChatIcon className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">Threads</span>
               </button>
               <button
                 onClick={() => handleCommunityOption('community')}
-                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-r from-slate-700 to-slate-900 text-white shadow-lg hover:shadow-xl transition-all hover:scale-105"
+                className="flex flex-col items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-emerald-600 to-emerald-800 text-white shadow-lg shadow-emerald-600/30 ring-1 ring-white/20 hover:shadow-xl transition-all hover:scale-105"
               >
-                <Users className="w-6 h-6" />
+                <MoleculeIcon className="w-6 h-6" />
                 <span className="text-[9px] mt-0.5 font-medium">Peptides</span>
               </button>
             </div>
@@ -168,10 +175,10 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
                 onClick={() => handleMobileClick(item)}
                 className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg min-w-[44px] flex-1 transition-all ${isActive
                   ? isHighlight
-                    ? 'text-white bg-gradient-to-r from-slate-700 to-slate-900'
-                    : 'text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800/50'
+                    ? 'text-white bg-gradient-to-br from-emerald-500 to-lime-500 shadow-md shadow-emerald-500/30'
+                    : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50/80 dark:bg-emerald-950/40'
                   : isHighlight
-                    ? 'text-slate-700 dark:text-slate-400'
+                    ? 'text-emerald-600 dark:text-emerald-400'
                     : 'text-slate-500 dark:text-slate-400'
                   }`}
               >

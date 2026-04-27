@@ -40,17 +40,19 @@ export default function ProtocolBuilder({ onComplete, onNavigate, preSelectedVia
     setPeptides(allPeptides);
     setVials(activeVials);
 
-    // Auto-select vial logic:
-    // 1. Use preSelectedVialId if provided
-    // 2. Otherwise, use the most recently created vial
+    // Auto-select the vial associated with the most recently created vial that
+    // belongs to a known peptide. Skip orphaned vials (peptide deleted).
     if (preSelectedVialId && activeVials.find(v => v.id === preSelectedVialId)) {
       setSelectedVialId(preSelectedVialId);
-    } else if (activeVials.length > 0) {
-      // Sort by creation date and pick the most recent
-      const sortedVials = [...activeVials].sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setSelectedVialId(sortedVials[0].id);
+      return;
+    }
+
+    const known = activeVials.filter(v => allPeptides.some(p => p.id === v.peptideId));
+    if (known.length > 0) {
+      const newest = [...known].sort(
+        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      )[0];
+      setSelectedVialId(newest.id);
     }
   }, [preSelectedVialId]);
 
@@ -60,6 +62,17 @@ export default function ProtocolBuilder({ onComplete, onNavigate, preSelectedVia
 
   const selectedVial = vials.find(v => v.id === selectedVialId);
   const selectedPeptide = selectedVial ? peptides.find(p => p.id === selectedVial.peptideId) : null;
+
+  // Build the picker list: one row per peptide that has at least one active vial.
+  // Pre-selects each peptide's most recent active vial.
+  const peptideOptions = peptides
+    .map(peptide => {
+      const peptideVials = vials
+        .filter(v => v.peptideId === peptide.id)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return { peptide, vial: peptideVials[0] ?? null };
+    })
+    .filter(opt => opt.vial !== null);
 
   const buildCurrentStackDraft = (): StackPeptideInfo[] => {
     if (!selectedPeptide || !targetDose) {
@@ -95,8 +108,16 @@ export default function ProtocolBuilder({ onComplete, onNavigate, preSelectedVia
   };
 
   const handleCreateProtocol = async () => {
-    if (!selectedPeptide || !selectedVial || !targetDose) {
-      alert('Please fill in all required fields');
+    const missing: string[] = [];
+    if (!selectedVial) missing.push('a peptide / vial');
+    if (!targetDose) missing.push('a target dose');
+    if (!durationWeeks) missing.push('a duration');
+    if (missing.length > 0) {
+      alert(`Please choose ${missing.join(', ')} before creating the protocol.`);
+      return;
+    }
+    if (!selectedPeptide || !selectedVial) {
+      alert('The selected vial is missing its peptide. Try re-selecting.');
       return;
     }
 
@@ -239,66 +260,67 @@ export default function ProtocolBuilder({ onComplete, onNavigate, preSelectedVia
         </div>
       </motion.div>
 
-      {/* Selected Vial Info */}
-      {selectedVial && selectedPeptide && (
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="bg-white/5 dark:bg-slate-900/5 border border-white/20 dark:border-slate-600/30 backdrop-blur-sm">
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <Zap className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm font-semibold text-blue-600 dark:text-blue-400">
-                      Using Your Latest Vial
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-1">{selectedPeptide.name}</h3>
-                  <div className="flex gap-4 text-sm text-muted-foreground">
-                    <span>Vial: {selectedVial.vialSize} {selectedVial.vialSizeUnit}</span>
-                    {selectedVial.concentration && (
-                      <span>Concentration: {selectedVial.concentration.toFixed(2)} {selectedVial.concentrationUnit}</span>
-                    )}
-                  </div>
-                  {selectedPeptide.commonDosageRange && (
-                    <div className="mt-2 text-sm">
-                      <span className="text-muted-foreground">Common range:</span>{' '}
-                      <span className="font-medium">
-                        {selectedPeptide.commonDosageRange.min}-{selectedPeptide.commonDosageRange.max} {selectedPeptide.commonDosageRange.unit}
-                      </span>
-                    </div>
+      {/* Peptide / Vial picker — always visible */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.1 }}
+      >
+        <Card className="bg-white/5 dark:bg-slate-900/5 border border-white/20 dark:border-slate-600/30 backdrop-blur-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              Choose Peptide
+            </CardTitle>
+            <CardDescription>
+              Pick which peptide vial this protocol is for. We schedule doses against this vial.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="peptideSelect" className="text-base font-semibold">
+                Peptide *
+              </Label>
+              <select
+                id="peptideSelect"
+                value={selectedVialId}
+                onChange={(e) => setSelectedVialId(e.target.value)}
+                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-base"
+              >
+                <option value="">— Select a peptide —</option>
+                {peptideOptions.map(({ peptide, vial }) => (
+                  <option key={peptide.id} value={vial!.id}>
+                    {peptide.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                {peptideOptions.length} peptide{peptideOptions.length === 1 ? '' : 's'} ready to schedule.
+              </p>
+            </div>
+
+            {selectedVial && selectedPeptide && (
+              <div className="rounded-lg border border-emerald-300/40 dark:border-emerald-500/30 bg-emerald-50/40 dark:bg-emerald-950/20 p-4">
+                <h3 className="text-xl font-bold mb-1">{selectedPeptide.name}</h3>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                  <span>Vial: {selectedVial.vialSize} {selectedVial.vialSizeUnit}</span>
+                  {selectedVial.concentration && (
+                    <span>Concentration: {selectedVial.concentration.toFixed(2)} {selectedVial.concentrationUnit}</span>
                   )}
                 </div>
-
-                {/* Change vial option */}
-                {vials.length > 1 && (
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="vialSelect" className="text-xs">Change vial</Label>
-                    <select
-                      id="vialSelect"
-                      value={selectedVialId}
-                      onChange={(e) => setSelectedVialId(e.target.value)}
-                      className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
-                    >
-                      {vials.map(v => {
-                        const peptide = peptides.find(p => p.id === v.peptideId);
-                        return (
-                          <option key={v.id} value={v.id}>
-                            {peptide?.name} - {v.vialSize}{v.vialSizeUnit}
-                          </option>
-                        );
-                      })}
-                    </select>
+                {selectedPeptide.commonDosageRange && (
+                  <div className="mt-2 text-sm">
+                    <span className="text-muted-foreground">Common range:</span>{' '}
+                    <span className="font-medium">
+                      {selectedPeptide.commonDosageRange.min}-{selectedPeptide.commonDosageRange.max} {selectedPeptide.commonDosageRange.unit}
+                    </span>
                   </div>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
 
       {/* Protocol Configuration */}
       <motion.div

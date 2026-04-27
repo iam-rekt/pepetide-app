@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch'; // Need to check if this exists or use basic input
 import { Label } from '@/components/ui/label';
-import { Bell, Smartphone, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Bell, Smartphone, Send, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
+import { DropletIcon, MoleculeIcon, GearIcon } from '@/components/icons';
 import { syncData } from '@/lib/sync';
 
 export default function Settings() {
@@ -116,12 +117,13 @@ export default function Settings() {
     };
 
     return (
-        <div className="max-w-md mx-auto space-y-6">
+        <div className="space-y-8">
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="w-full max-w-md md:mr-auto"
             >
-                <Card className="border-white/20 dark:border-slate-700/30 bg-white/5 dark:bg-slate-900/5 backdrop-blur-sm">
+                <Card className="border-white/20 dark:border-slate-700/30 bg-white/10 dark:bg-slate-900/20 backdrop-blur-md shadow-xl shadow-emerald-500/5">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <Bell className="w-5 h-5" />
@@ -219,6 +221,81 @@ export default function Settings() {
                     </CardContent>
                 </Card>
             </motion.div>
+
+            {/* FAQ — stacked under settings, no card background */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="w-full"
+            >
+                <div className="mb-4">
+                    <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+                        <MoleculeIcon className="w-5 h-5 text-emerald-500" />
+                        FAQ
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        How PEPEtide handles your data, identity, and the network it talks to.
+                    </p>
+                </div>
+                <div className="space-y-2">
+                    {FAQ_ITEMS.map((item, idx) => (
+                        <details
+                            key={idx}
+                            className="group rounded-lg border border-white/15 dark:border-slate-700/40 px-4 py-3 transition-colors hover:border-emerald-300/40 dark:hover:border-emerald-500/30 open:border-emerald-300/50 dark:open:border-emerald-500/40"
+                        >
+                            <summary className="flex items-center justify-between cursor-pointer list-none gap-3">
+                                <span className="flex items-center gap-2 font-medium text-sm text-slate-900 dark:text-slate-100">
+                                    <item.icon className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    {item.q}
+                                </span>
+                                <ChevronDown className="w-4 h-4 text-slate-500 transition-transform duration-200 group-open:rotate-180 shrink-0" />
+                            </summary>
+                            <p className="mt-2 pl-6 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                {item.a}
+                            </p>
+                        </details>
+                    ))}
+                </div>
+            </motion.div>
         </div>
     );
 }
+
+const FAQ_ITEMS: { icon: (p: { className?: string }) => React.JSX.Element; q: string; a: string }[] = [
+    {
+        icon: MoleculeIcon,
+        q: 'Is PEPEtide decentralized?',
+        a: 'The thread layer is anonymous and lightweight — no accounts, no profiles. Public assets attached to threads (images, snapshots) are pinned to IPFS via Storacha so they live on a content-addressed network instead of a single private server.',
+    },
+    {
+        icon: DropletIcon,
+        q: 'Where does my peptide tracking data live?',
+        a: 'Your peptides, vials, protocols, and dose logs are stored locally in your browser (IndexedDB) and on your device only. Nothing about your personal stack is uploaded unless you explicitly share it as a thread.',
+    },
+    {
+        icon: GearIcon,
+        q: 'What about the Threads / forum content?',
+        a: 'Posts go to a shared Postgres database so others can read them. Posts are anonymous — there is no login and no user profile attached. Images you attach are uploaded to IPFS and only the content hash is stored in the database.',
+    },
+    {
+        icon: GearIcon,
+        q: 'Do you collect analytics or sell data?',
+        a: 'No personal data is sold or shared with third parties. Basic anonymous traffic analytics (page views) run via Vercel Analytics. There is no tracker network, no ad SDKs, and no fingerprinting.',
+    },
+    {
+        icon: DropletIcon,
+        q: 'Can I delete my data?',
+        a: 'Local data: clear your browser storage for the site and it is gone. Threads you posted: you can delete a thread from the thread page; the database row is removed and the IPFS asset becomes unpinned over time.',
+    },
+    {
+        icon: MoleculeIcon,
+        q: 'Why IPFS instead of a regular CDN?',
+        a: 'IPFS gives content-addressed, censorship-resistant storage. The same image hash works across multiple gateways, so if one provider goes down the asset is still retrievable from any IPFS node that has it pinned.',
+    },
+    {
+        icon: GearIcon,
+        q: 'Is this medical advice?',
+        a: 'No. PEPEtide is a tracking and community tool. Nothing here is medical advice; consult a qualified clinician before starting, changing, or stopping any peptide or medication protocol.',
+    },
+];

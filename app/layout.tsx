@@ -1,16 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import WalletProvider from "@/components/WalletProvider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -93,34 +96,19 @@ export default function RootLayout({
         <link rel="apple-touch-startup-image" href="/icon-512.png" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+        className={`${spaceGrotesk.variable} ${jetbrainsMono.variable} font-sans antialiased min-h-screen`}
       >
-        {/* Site-wide responsive background image */}
-        <div
-          className="fixed inset-0 pointer-events-none z-0 bg-no-repeat bg-center bg-cover opacity-35 bg-hero-responsive"
-          style={{
-            backgroundImage: 'url(/hero-pepe.jpg)',
-          }}
-          aria-hidden="true"
-        />
-        {/* Mobile-specific background (if hero-pepe-mobile.png exists) */}
-        <style dangerouslySetInnerHTML={{
-          __html: `
-            @media (max-width: 768px) {
-              .bg-hero-responsive {
-                background-image: url(/hero-pepe-mobile.png) !important;
-              }
-            }
-          `
-        }} />
-        <div className="relative z-10 min-h-screen">
-          {children}
-        </div>
+        <WalletProvider>{children}</WalletProvider>
         <Analytics />
         <script dangerouslySetInnerHTML={{
           __html: `
             if ('serviceWorker' in navigator) {
               window.addEventListener('load', () => {
+                if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+                  // Skip SW in dev — it caches aggressively and interferes with HMR + wallet adapter network calls.
+                  navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister()));
+                  return;
+                }
                 navigator.serviceWorker.register('/sw.js').then(registration => {
                   console.log('SW registered:', registration.scope);
                 }).catch(error => {

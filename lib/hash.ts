@@ -9,8 +9,10 @@ export async function hashIP(ip: string): Promise<string> {
   } else {
     // Client-side: use Web Crypto API
     const encoder = new TextEncoder();
-    const data = encoder.encode(ip);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const src = encoder.encode(ip);
+    const buf = new ArrayBuffer(src.byteLength);
+    new Uint8Array(buf).set(src);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buf);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
   }

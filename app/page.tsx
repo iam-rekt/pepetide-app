@@ -12,8 +12,34 @@ import ForumView from '@/components/ForumView';
 import Settings from '@/components/Settings';
 import Navigation from '@/components/Navigation';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
+import { PepetideMark } from '@/components/icons';
+import ScrambleText from '@/components/ScrambleText';
+import WalletButton from '@/components/WalletButton';
 import { startMissedDoseChecker } from '@/lib/notifications';
 import type { ViewMode } from '@/types';
+
+const HOME_BG_DESKTOP = '/imagesnew/pepetide xyz home.webp';
+const HOME_BG_MOBILE = '/imagesnew/pepetide xyz home mobile.webp';
+
+const backgroundByView: Partial<Record<ViewMode, { desktop: string; mobile: string }>> = {
+  dashboard: { desktop: HOME_BG_DESKTOP, mobile: HOME_BG_MOBILE },
+  calendar: {
+    desktop: '/imagesnew/Pepetide xyz cal.webp',
+    mobile: '/imagesnew/Pepetide calendar mobile.webp',
+  },
+  protocol: {
+    desktop: '/imagesnew/Peptide kitchen.webp',
+    mobile: '/imagesnew/Peptide kitchen mobile.webp',
+  },
+  sys: {
+    desktop: '/imagesnew/Pepetide evo.webp',
+    mobile: '/imagesnew/Pepetide evo mobile.webp',
+  },
+  settings: {
+    desktop: '/imagesnew/Pepetide babe.webp',
+    mobile: '/imagesnew/Pepetide babe mobile.webp',
+  },
+};
 
 const validViews = new Set<ViewMode>([
   'dashboard',
@@ -39,13 +65,9 @@ function getViewFromSearch(search: string): ViewMode {
 }
 
 export default function Home() {
-  const [currentView, setCurrentView] = useState<ViewMode>(() => {
-    if (typeof window === 'undefined') {
-      return 'dashboard';
-    }
-
-    return getViewFromSearch(window.location.search);
-  });
+  // Always initialize to 'dashboard' so server + client first render match;
+  // the popstate effect below syncs from the URL after mount.
+  const [currentView, setCurrentView] = useState<ViewMode>('dashboard');
   const [protocolKey, setProtocolKey] = useState(0);
 
   // Start client-side notification checker
@@ -97,16 +119,61 @@ export default function Home() {
     setCurrentView(newView);
   }, []);
 
+  const bgImages = backgroundByView[currentView] ?? {
+    desktop: HOME_BG_DESKTOP,
+    mobile: HOME_BG_MOBILE,
+  };
+
   return (
-    <div className="min-h-screen pb-safe">
-      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-6xl">
+    <div className="relative min-h-screen pb-safe">
+      {/* Per-section background — desktop (landscape source) */}
+      <div
+        key={`${bgImages.desktop}-d`}
+        className="fixed inset-0 pointer-events-none z-0 bg-no-repeat bg-center bg-cover opacity-40 transition-opacity duration-500 hidden md:block"
+        style={{ backgroundImage: `url("${encodeURI(bgImages.desktop)}")` }}
+        aria-hidden="true"
+      />
+      {/* Per-section background — mobile (portrait source) */}
+      <div
+        key={`${bgImages.mobile}-m`}
+        className="fixed inset-0 pointer-events-none z-0 bg-no-repeat bg-center bg-cover opacity-40 transition-opacity duration-500 md:hidden"
+        style={{ backgroundImage: `url("${encodeURI(bgImages.mobile)}")` }}
+        aria-hidden="true"
+      />
+      {/* Tonal unifier: low-opacity emerald wash so all section bgs share the same color tone */}
+      <div
+        className="fixed inset-0 pointer-events-none z-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-lime-500/10 mix-blend-overlay"
+        aria-hidden="true"
+      />
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes pepe-blink {
+            0%, 49% { opacity: 1; transform: scale(1); }
+            50%, 100% { opacity: 0.15; transform: scale(0.85); }
+          }
+          .animate-pepe-blink { animation: pepe-blink 1.1s steps(1) infinite; }
+        `
+      }} />
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 py-4 sm:py-6 max-w-6xl">
         <header className="mb-6 sm:mb-8">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-1 sm:mb-2">
-            PEPEtide
-          </h1>
-          <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400">
-            Private peptide tracking with anonymous Threads when you want to ask, share, or update.
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <div className="flex items-center gap-3">
+              <PepetideMark className="w-10 h-10 sm:w-12 sm:h-12 drop-shadow-[0_4px_12px_rgba(34,197,94,0.45)]" />
+              <h1 className="text-4xl sm:text-5xl font-black tracking-tight bg-gradient-to-br from-emerald-400 via-green-500 to-lime-500 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.35)]">
+                PEPEtide
+              </h1>
+            </div>
+            <div className="ml-auto">
+              <WalletButton />
+            </div>
+            <p className="flex items-center gap-2 text-[11px] sm:text-xs font-mono tracking-tight text-slate-700 dark:text-slate-300 max-w-full">
+              <span
+                className="inline-block w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(34,197,94,0.7)] animate-pepe-blink shrink-0"
+                aria-hidden="true"
+              />
+              <ScrambleText text="Private peptide tracking with decentralized anonymous Threads for Peptards." />
+            </p>
+          </div>
         </header>
 
         <Navigation currentView={currentView} onViewChange={handleViewChange} />

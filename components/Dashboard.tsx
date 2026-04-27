@@ -4,10 +4,18 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { AlertCircle, CheckCircle2, ArrowRight } from 'lucide-react';
 import {
-  AlertCircle, CheckCircle2, Clock, TrendingUp, Sparkles,
-  Calendar, Calculator, ArrowRight, Zap, MessageSquare
-} from 'lucide-react';
+  VialIcon,
+  ScrollIcon,
+  SyringeIcon,
+  SparkleIcon,
+  BeakerIcon,
+  CalendarIcon,
+  ChatIcon,
+  TrendIcon,
+  DropletIcon,
+} from '@/components/icons';
 import { getPeptides, getActiveVials, getActiveProtocols, getDoseLogs } from '@/lib/db';
 import { getAllSafetyChecks } from '@/lib/safety';
 import type { Peptide, PeptideVial, DoseProtocol, DoseLog, ViewMode, SafetyCheck } from '@/types';
@@ -169,10 +177,10 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
             {/* Quick Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: 'Peptides', value: stats.activePeptides, icon: Zap, color: 'from-cyan-500 to-blue-600', iconColor: 'text-white', glow: 'shadow-cyan-500/50' },
-                { label: 'Vials', value: stats.activeVials, icon: CheckCircle2, color: 'from-slate-700 to-slate-900 dark:from-slate-300 dark:to-slate-100', iconColor: 'text-white dark:text-slate-900', glow: 'shadow-slate-500/30' },
-                { label: 'Protocols', value: stats.activeProtocols, icon: Clock, color: 'from-purple-500 to-pink-600', iconColor: 'text-white', glow: 'shadow-purple-500/50' },
-                { label: "Today's Doses", value: `${stats.completedToday}/${stats.todayDoses}`, icon: TrendingUp, color: 'from-slate-700 to-slate-900 dark:from-slate-300 dark:to-slate-100', iconColor: 'text-white dark:text-slate-900', glow: 'shadow-slate-500/30' },
+                { label: 'Peptides', value: stats.activePeptides, icon: DropletIcon, color: 'from-emerald-500 to-lime-500', iconColor: 'text-white', glow: 'shadow-emerald-500/50' },
+                { label: 'Vials', value: stats.activeVials, icon: VialIcon, color: 'from-cyan-500 to-blue-600', iconColor: 'text-white', glow: 'shadow-cyan-500/40' },
+                { label: 'Protocols', value: stats.activeProtocols, icon: ScrollIcon, color: 'from-purple-500 to-pink-600', iconColor: 'text-white', glow: 'shadow-purple-500/50' },
+                { label: "Today's Doses", value: `${stats.completedToday}/${stats.todayDoses}`, icon: SyringeIcon, color: 'from-amber-500 to-orange-600', iconColor: 'text-white', glow: 'shadow-amber-500/40' },
               ].map((stat, index) => {
                 const Icon = stat.icon;
                 return (
@@ -185,7 +193,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl blur-xl ${stat.glow}`} />
                     <div className="relative p-4 bg-white/5 dark:bg-slate-900/5 backdrop-blur-sm rounded-xl border border-white/20 dark:border-slate-600/30 shadow-lg">
-                      <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${stat.color} mb-2 shadow-lg`}>
+                      <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${stat.color} mb-2 shadow-md ring-1 ring-white/30 dark:ring-white/10 backdrop-blur-sm opacity-75`}>
                         <Icon className={`w-4 h-4 ${stat.iconColor}`} />
                       </div>
                       <div className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</div>
@@ -244,7 +252,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
         <Card className="bg-white/5 dark:bg-slate-900/5 backdrop-blur-sm border-white/20 dark:border-slate-700/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5" />
+              <SparkleIcon className="w-5 h-5 text-emerald-500" />
               Quick Actions
             </CardTitle>
             <CardDescription>Get started with your peptide tracking</CardDescription>
@@ -256,9 +264,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.7, type: 'spring', bounce: 0.5 }}
-                  className="mx-auto mb-6 w-24 h-24 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-2xl shadow-cyan-500/50"
+                  className="mx-auto mb-6 w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500/80 to-lime-500/80 flex items-center justify-center shadow-2xl shadow-emerald-500/40 ring-1 ring-white/30 backdrop-blur-sm"
                 >
-                  <Sparkles className="w-12 h-12 text-white" />
+                  <DropletIcon className="w-12 h-12 text-white" />
                 </motion.div>
                 <h3 className="text-2xl font-bold mb-2">Ready to Track Your First Peptide?</h3>
                 <p className="text-muted-foreground mb-6">
@@ -267,9 +275,9 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                 <Button
                   onClick={() => onNavigate('add-stack')}
                   size="lg"
-                  className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 shadow-lg shadow-cyan-500/30 hover:shadow-xl hover:shadow-cyan-500/50 transition-all"
+                  className="bg-gradient-to-r from-emerald-500 to-lime-500 hover:from-emerald-600 hover:to-lime-600 shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/50 transition-all"
                 >
-                  <Sparkles className="w-5 h-5 mr-2" />
+                  <DropletIcon className="w-5 h-5 mr-2" />
                   Create Your First Stack
                 </Button>
               </div>
@@ -279,23 +287,23 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   {
                     title: 'Add New Stack',
                     desc: 'Create peptide + vial in one flow',
-                    icon: Sparkles,
+                    icon: DropletIcon,
                     action: 'add-stack',
-                    gradient: 'from-cyan-500 to-blue-600',
-                    glow: 'from-cyan-500/20 to-blue-500/20'
+                    gradient: 'from-emerald-500 to-lime-500',
+                    glow: 'from-emerald-500/20 to-lime-500/20'
                   },
                   {
                     title: 'Calculator',
                     desc: 'Calculate dosing and volume',
-                    icon: Calculator,
+                    icon: BeakerIcon,
                     action: 'calculator',
-                    gradient: 'from-slate-700 to-slate-900 dark:from-slate-300 dark:to-slate-100',
-                    glow: 'from-slate-500/20 to-slate-600/20'
+                    gradient: 'from-cyan-500 to-blue-600',
+                    glow: 'from-cyan-500/20 to-blue-500/20'
                   },
                   {
                     title: 'View Calendar',
                     desc: 'Track your daily doses',
-                    icon: Calendar,
+                    icon: CalendarIcon,
                     action: 'calendar',
                     gradient: 'from-purple-500 to-pink-600',
                     glow: 'from-purple-500/20 to-pink-500/20'
@@ -303,7 +311,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   ...(protocols.length > 0 ? [{
                     title: 'Share Active Stack',
                     desc: 'Prefill a thread from tracked protocols',
-                    icon: MessageSquare,
+                    icon: ChatIcon,
                     action: 'share-active-stack',
                     gradient: 'from-cyan-500 to-blue-600',
                     glow: 'from-cyan-500/20 to-blue-500/20'
@@ -311,7 +319,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                   ...(todayLogs.length > 0 ? [{
                     title: 'Share Today Update',
                     desc: 'Turn today’s tracked progress into a thread',
-                    icon: TrendingUp,
+                    icon: TrendIcon,
                     action: 'share-today-update',
                     gradient: 'from-emerald-500 to-teal-600',
                     glow: 'from-emerald-500/20 to-teal-500/20'
@@ -345,7 +353,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
                         <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br opacity-50 group-hover:opacity-100 transition-opacity duration-300 blur-2xl ${action.glow} rounded-full transform translate-x-16 -translate-y-16`} />
 
                         <div className="relative">
-                          <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${action.gradient} mb-3 shadow-lg`}>
+                          <div className={`inline-flex p-3 rounded-xl bg-gradient-to-br ${action.gradient} mb-3 shadow-md ring-1 ring-white/30 dark:ring-white/10 backdrop-blur-sm opacity-75`}>
                             <Icon className="w-6 h-6 text-white" />
                           </div>
                           <h3 className="font-semibold text-lg mb-1">{action.title}</h3>

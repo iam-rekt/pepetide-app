@@ -6,7 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, ArrowRight, Check, Sparkles, Beaker, Calendar as CalendarIcon } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Beaker, Calendar as CalendarIcon } from 'lucide-react';
+import { PlusVialIcon } from '@/components/icons';
 import { addPeptide, addVial } from '@/lib/db';
 import { syncData } from '@/lib/sync';
 import { calculateExpirationDate } from '@/lib/calculator';
@@ -123,8 +124,8 @@ export default function AddStack({ onBack, onComplete }: AddStackProps) {
           <div className="relative overflow-hidden rounded-2xl p-8">
             <div className="relative">
               <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl shadow-lg shadow-cyan-500/30">
-                  <Sparkles className="w-6 h-6 text-white dark:text-slate-900" />
+                <div className="p-3 bg-gradient-to-br from-emerald-500 to-lime-500 rounded-xl shadow-lg shadow-emerald-500/30 ring-1 ring-white/30">
+                  <PlusVialIcon className="w-6 h-6 text-white" />
                 </div>
                 <div>
                   <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent">

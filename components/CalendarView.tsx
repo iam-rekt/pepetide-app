@@ -139,7 +139,7 @@ export default function CalendarView({ onNavigate }: CalendarViewProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
       {/* Calendar */}
       <Card className="lg:col-span-2">
         <CardHeader>
@@ -171,16 +171,16 @@ export default function CalendarView({ onNavigate }: CalendarViewProps) {
         </CardHeader>
         <CardContent>
           {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-2 mb-2">
+          <div className="grid grid-cols-7 gap-1 mb-1">
             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-              <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
+              <div key={day} className="text-center text-[11px] font-medium text-muted-foreground py-1">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar days */}
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1 max-w-[460px] mx-auto">
             {/* Empty cells for days before month starts */}
             {Array.from({ length: monthStart.getDay() }).map((_, i) => (
               <div key={`empty-${i}`} className="aspect-square" />
@@ -197,28 +197,28 @@ export default function CalendarView({ onNavigate }: CalendarViewProps) {
                   key={day.toISOString()}
                   onClick={() => setSelectedDate(day)}
                   className={`
-                    aspect-square p-2 rounded-lg border-2 transition-all
+                    aspect-square p-1 rounded-md border transition-all
                     ${isSelected ? 'border-blue-500 bg-blue-50 dark:bg-blue-950' : 'border-transparent'}
-                    ${isToday ? 'ring-2 ring-blue-300 dark:ring-blue-700' : ''}
+                    ${isToday ? 'ring-1 ring-blue-300 dark:ring-blue-700' : ''}
                     ${status === 'complete' ? 'bg-green-100 dark:bg-green-950' : ''}
                     ${status === 'partial' ? 'bg-yellow-100 dark:bg-yellow-950' : ''}
                     ${status === 'missed' ? 'bg-red-100 dark:bg-red-950' : ''}
                     hover:border-blue-300 dark:hover:border-blue-700
                   `}
                 >
-                  <div className="text-sm font-medium">
+                  <div className="text-xs font-medium leading-none">
                     {format(day, 'd')}
                   </div>
                   {status !== 'none' && (
-                    <div className="flex justify-center mt-1">
+                    <div className="flex justify-center mt-0.5">
                       {status === 'complete' && (
-                        <CheckCircle2 className="w-3 h-3 text-green-600 dark:text-green-400" />
+                        <CheckCircle2 className="w-2.5 h-2.5 text-green-600 dark:text-green-400" />
                       )}
                       {status === 'partial' && (
-                        <Circle className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                        <Circle className="w-2.5 h-2.5 text-yellow-600 dark:text-yellow-400" />
                       )}
                       {status === 'missed' && (
-                        <XCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
+                        <XCircle className="w-2.5 h-2.5 text-red-600 dark:text-red-400" />
                       )}
                     </div>
                   )}
