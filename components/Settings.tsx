@@ -109,6 +109,11 @@ export default function Settings() {
             console.log('Using userId:', userId);
             setTelegramCode(userId);
             setTelegramEnabled(true);
+
+            // Auto-launch Telegram with the deep link so the user lands directly
+            // on @Pepetidebot with the /start payload pre-filled.
+            const deepLink = `https://t.me/Pepetidebot?start=${userId}`;
+            window.open(deepLink, '_blank', 'noopener,noreferrer');
         } catch (e) {
             console.error('Telegram connection error:', e);
             alert(`Failed to initialize connection: ${e instanceof Error ? e.message : 'Unknown error'}\n\nCheck the browser console for details.`);

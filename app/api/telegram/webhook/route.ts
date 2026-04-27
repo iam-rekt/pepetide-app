@@ -53,14 +53,31 @@ export async function POST(request: Request) {
                             }
                         });
 
-                        await sendTelegramMessage(chatId, "✅ Successfully connected to PEPEtide!\n\nYou will now receive reminders for your missed peptide doses.");
+                        await sendTelegramMessage(chatId, "✅ Successfully connected to PEPEtide!\n\nYou will now receive reminders for your missed peptide doses.\n\nUse /disconnect to unlink at any time.");
                     } else {
                         console.error(`[Telegram] User not found for userId: ${userId}`);
                         await sendTelegramMessage(chatId, `❌ Invalid connection code.\n\nPlease try linking again from the app settings.\n\nDebug: User ID ${userId.substring(0, 8)}... not found in database.`);
                     }
                 } else {
-                    await sendTelegramMessage(chatId, "Welcome to PEPEtide Bot! 🐸\n\nPlease use the link from the app settings to connect your account.");
+                    await sendTelegramMessage(chatId, "Welcome to PEPEtide Bot! 🐸\n\nPlease use the link from the app settings to connect your account.\n\nCommands:\n/start <code> — Link your account\n/disconnect — Unlink this chat\n/help — Show this menu");
                 }
+            } else if (text.startsWith('/disconnect')) {
+                // Find user(s) linked to this chatId and unlink them
+                const linkedUsers = await prisma.user.findMany({
+                    where: { telegramChatId: chatId.toString() }
+                });
+
+                if (linkedUsers.length === 0) {
+                    await sendTelegramMessage(chatId, "ℹ️ No linked PEPEtide account found for this chat.\n\nIf you meant to connect, use the link from the app settings.");
+                } else {
+                    await prisma.user.updateMany({
+                        where: { telegramChatId: chatId.toString() },
+                        data: { telegramChatId: null, telegramUsername: null }
+                    });
+                    await sendTelegramMessage(chatId, "✅ Disconnected. You will no longer receive PEPEtide reminders.\n\nReconnect any time from the app settings.");
+                }
+            } else if (text.startsWith('/help')) {
+                await sendTelegramMessage(chatId, "PEPEtide Bot — peptide dose reminders 🐸\n\nCommands:\n/start <code> — Link your account (use the link from the app)\n/disconnect — Unlink this chat\n/help — Show this menu");
             }
         }
 
