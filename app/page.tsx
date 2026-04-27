@@ -12,6 +12,7 @@ import ForumView from '@/components/ForumView';
 import Settings from '@/components/Settings';
 import Navigation from '@/components/Navigation';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
+import Governance from '@/components/Governance';
 import { PepetideMark } from '@/components/icons';
 import ScrambleText from '@/components/ScrambleText';
 import WalletButton from '@/components/WalletButton';
@@ -39,6 +40,10 @@ const backgroundByView: Partial<Record<ViewMode, { desktop: string; mobile: stri
     desktop: '/imagesnew/Pepetide babe.webp',
     mobile: '/imagesnew/Pepetide babe mobile.webp',
   },
+  governance: {
+    desktop: '/imagesnew/Pepetide evo.webp',
+    mobile: '/imagesnew/Pepetide evo mobile.webp',
+  },
 };
 
 const validViews = new Set<ViewMode>([
@@ -51,6 +56,7 @@ const validViews = new Set<ViewMode>([
   'community',
   'settings',
   'sys',
+  'governance',
 ]);
 
 function getViewFromSearch(search: string): ViewMode {
@@ -186,6 +192,7 @@ export default function Home() {
           {currentView === 'calculator' && <Calculator key="calculator" />}
           {currentView === 'calendar' && <CalendarView key="calendar" onNavigate={handleViewChange} />}
           {currentView === 'community' && <CommunityView key="community" />}
+          {currentView === 'governance' && <Governance key="governance" />}
           {currentView === 'sys' && <ForumView key="sys" />}
           {currentView === 'settings' && <Settings key="settings" />}
         </main>

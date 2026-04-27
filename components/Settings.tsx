@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Bell, Smartphone, Send, CheckCircle2, AlertCircle, ChevronDown } from 'lucide-react';
 import { DropletIcon, MoleculeIcon, GearIcon } from '@/components/icons';
 import { syncData } from '@/lib/sync';
+import AdminPanel from '@/components/AdminPanel';
 
 export default function Settings() {
     const [browserEnabled, setBrowserEnabled] = useState(false);
@@ -257,6 +258,16 @@ export default function Settings() {
                         </details>
                     ))}
                 </div>
+            </motion.div>
+
+            {/* Admin / moderation — only meaningful if ADMIN_KEY is configured server-side */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="w-full max-w-md md:mr-auto"
+            >
+                <AdminPanel />
             </motion.div>
         </div>
     );

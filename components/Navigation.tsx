@@ -11,6 +11,7 @@ import {
   ChatIcon,
   MoleculeIcon,
   GearIcon,
+  TrendIcon,
 } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import type { ViewMode } from '@/types';
@@ -33,6 +34,7 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     { id: 'calendar' as ViewMode, label: 'Calendar', icon: CalendarIcon },
     { id: 'sys' as ViewMode, label: 'Threads', icon: ChatIcon },
     { id: 'community' as ViewMode, label: 'Peptides', icon: MoleculeIcon },
+    { id: 'governance' as ViewMode, label: 'DAO', icon: TrendIcon },
     { id: 'settings' as ViewMode, label: 'Settings', icon: GearIcon },
   ];
 

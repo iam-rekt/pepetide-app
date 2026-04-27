@@ -98,7 +98,7 @@ export interface SafetyCheck {
   peptideIds?: string[];
 }
 
-export type ViewMode = 'dashboard' | 'add-stack' | 'my-list' | 'calculator' | 'calendar' | 'protocol' | 'community' | 'settings' | 'sys';
+export type ViewMode = 'dashboard' | 'add-stack' | 'my-list' | 'calculator' | 'calendar' | 'protocol' | 'community' | 'settings' | 'sys' | 'governance';
 
 // Forum Thread - for SYS (Share Your Stack) forum
 export interface ForumThread {
