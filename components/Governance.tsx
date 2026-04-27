@@ -68,8 +68,8 @@ const PILLARS = [
   },
   {
     icon: TrendIcon,
-    title: 'Treasury self-funded',
-    body: 'A small fee on staking actions flows into a multisig treasury that pays for IPFS pinning, Postgres, and contributor bounties.',
+    title: 'Treasury funds peptide R&D',
+    body: 'The treasury bankrolls new peptide ideas and pushes peptide science forward — research grants, lab partnerships, expert AMAs. Revenue generated from that work is shared back to $PEPETIDE holders.',
   },
   {
     icon: ChatIcon,
@@ -294,21 +294,19 @@ export default function Governance() {
         </div>
         <div className="space-y-2 rounded-2xl border border-white/20 dark:border-slate-700/40 bg-white/40 dark:bg-slate-900/50 backdrop-blur-md p-3 shadow-lg">
           {[
-            { phase: 'v1', when: 'now', body: 'Wallet connect + Peptard handle. Anonymous Threads. Per-section UI.' },
-            { phase: 'v1.5', when: 'pre-launch', body: 'Read-only token balance display. Governance preview (this page).' },
-            { phase: 'v2', when: 'pump.fun launch', body: 'Hold-gated handles, weighted upvotes, snapshot governance, treasury page.' },
-            { phase: 'v2.5', when: 'post-graduation', body: 'Stake-to-boost threads, custody multisig, on-chain proposals via Realms.' },
-            { phase: 'v3', when: 'TBD', body: 'Anonymized data DAO (opt-in dose data → research dataset → revenue split).' },
+            { phase: 'v1', body: 'Wallet connect + Peptard handle. Anonymous Threads. Per-section UI.' },
+            { phase: 'v1.5', body: 'Read-only token balance display. Governance preview (this page).' },
+            { phase: 'v2', body: 'Hold-gated handles, weighted upvotes, snapshot governance, treasury page.' },
+            { phase: 'v2.5', body: 'Stake-to-boost threads, custody multisig, on-chain proposals via Realms.' },
+            { phase: 'v3', body: 'Buybacks & burn — protocol revenue used to buy $PEPETIDE off the market and burn it, tightening supply for holders.' },
+            { phase: 'v3.5', body: 'Anonymized data DAO (opt-in dose data → research dataset → revenue split).' },
           ].map((row) => (
             <div
               key={row.phase}
-              className="grid grid-cols-[auto_auto_1fr] items-center gap-3 sm:gap-4 rounded-lg border border-white/30 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/40 px-4 py-3 hover:border-emerald-300/50 dark:hover:border-emerald-500/40 transition-colors"
+              className="grid grid-cols-[auto_1fr] items-center gap-3 sm:gap-4 rounded-lg border border-white/30 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/40 px-4 py-3 hover:border-emerald-300/50 dark:hover:border-emerald-500/40 transition-colors"
             >
               <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/25 text-emerald-800 dark:text-emerald-300 border border-emerald-400/50">
                 {row.phase}
-              </span>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-700 dark:text-slate-400 hidden sm:inline">
-                {row.when}
               </span>
               <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">{row.body}</span>
             </div>
