@@ -260,16 +260,34 @@ export default function Settings() {
                 </div>
             </motion.div>
 
-            {/* Admin / moderation — only meaningful if ADMIN_KEY is configured server-side */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="w-full max-w-md md:mr-auto"
-            >
-                <AdminPanel />
-            </motion.div>
+            {/* Admin panel — hidden by default. Append `#admin` to the URL to reveal
+                (e.g. /?view=settings#admin). Public visitors never see it. */}
+            <AdminPanelGate />
         </div>
+    );
+}
+
+function AdminPanelGate() {
+    const [unlocked, setUnlocked] = useState(false);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const check = () => setUnlocked(window.location.hash === '#admin');
+        check();
+        window.addEventListener('hashchange', check);
+        return () => window.removeEventListener('hashchange', check);
+    }, []);
+
+    if (!unlocked) return null;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md md:mr-auto"
+        >
+            <AdminPanel />
+        </motion.div>
     );
 }
 

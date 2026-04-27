@@ -94,14 +94,14 @@ export default function Governance() {
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             v2 preview
           </span>
-          <span className="text-xs font-mono text-slate-600 dark:text-slate-400">
+          <span className="text-xs font-mono text-slate-800 dark:text-slate-300 font-semibold">
             voting opens at token launch
           </span>
         </div>
         <h1 className="text-3xl sm:text-5xl font-black tracking-tight bg-gradient-to-br from-emerald-400 via-green-500 to-lime-500 bg-clip-text text-transparent mb-2">
           Governance
         </h1>
-        <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 max-w-2xl">
+        <p className="text-sm sm:text-base text-slate-900 dark:text-slate-100 font-medium max-w-2xl">
           $PEPETIDE holders steer the protocol. Vote on the peptide catalog, moderation rules,
           treasury spend, and stake parameters. No accounts, no KYC — just hold the token in
           your Solana wallet.
@@ -131,7 +131,7 @@ export default function Governance() {
                 <Icon className="w-4 h-4 text-white" />
               </div>
               <div className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</div>
-              <div className="text-xs text-slate-600 dark:text-slate-400">{stat.label}</div>
+              <div className="text-xs text-slate-800 dark:text-slate-300 font-medium">{stat.label}</div>
             </div>
           );
         })}
@@ -187,7 +187,7 @@ export default function Governance() {
             <ScrollIcon className="w-5 h-5 text-emerald-500" />
             Proposals
           </h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-800 dark:text-slate-200 font-medium">
             Queued proposals that go live the moment voting opens.
           </p>
         </div>
@@ -218,7 +218,7 @@ export default function Governance() {
               <h3 className="font-semibold text-base sm:text-lg mb-1 text-slate-900 dark:text-slate-100">
                 {p.title}
               </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">{p.summary}</p>
+              <p className="text-sm text-slate-800 dark:text-slate-200 mb-3">{p.summary}</p>
               <div className="flex gap-2">
                 <button
                   disabled
@@ -249,7 +249,7 @@ export default function Governance() {
             <GearIcon className="w-5 h-5 text-emerald-500" />
             How it works
           </h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-1 text-sm text-slate-800 dark:text-slate-200 font-medium">
             Four pillars. Optional, anonymous, holder-controlled.
           </p>
         </div>
@@ -269,7 +269,7 @@ export default function Governance() {
                     <h3 className="font-semibold text-base mb-1 text-slate-900 dark:text-slate-100">
                       {pillar.title}
                     </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                    <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
                       {pillar.body}
                     </p>
                   </div>
@@ -292,7 +292,7 @@ export default function Governance() {
             Roadmap
           </h2>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 rounded-2xl border border-white/20 dark:border-slate-700/40 bg-white/40 dark:bg-slate-900/50 backdrop-blur-md p-3 shadow-lg">
           {[
             { phase: 'v1', when: 'now', body: 'Wallet connect + Peptard handle. Anonymous Threads. Per-section UI.' },
             { phase: 'v1.5', when: 'pre-launch', body: 'Read-only token balance display. Governance preview (this page).' },
@@ -302,15 +302,15 @@ export default function Governance() {
           ].map((row) => (
             <div
               key={row.phase}
-              className="grid grid-cols-[auto_auto_1fr] items-center gap-3 sm:gap-4 rounded-lg border border-white/10 dark:border-slate-700/40 px-4 py-3 hover:border-emerald-300/30 transition-colors"
+              className="grid grid-cols-[auto_auto_1fr] items-center gap-3 sm:gap-4 rounded-lg border border-white/30 dark:border-slate-700/50 bg-white/60 dark:bg-slate-900/40 px-4 py-3 hover:border-emerald-300/50 dark:hover:border-emerald-500/40 transition-colors"
             >
-              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-400/30">
+              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-500/25 text-emerald-800 dark:text-emerald-300 border border-emerald-400/50">
                 {row.phase}
               </span>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden sm:inline">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-700 dark:text-slate-400 hidden sm:inline">
                 {row.when}
               </span>
-              <span className="text-sm text-slate-700 dark:text-slate-300">{row.body}</span>
+              <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">{row.body}</span>
             </div>
           ))}
         </div>
