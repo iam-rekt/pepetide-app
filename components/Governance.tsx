@@ -98,7 +98,7 @@ export default function Governance() {
         <div className="flex items-center gap-3 mb-3">
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            v2 preview
+            v2
           </span>
           <span className="text-xs font-mono text-slate-800 dark:text-slate-300 font-semibold">
             
