@@ -91,7 +91,7 @@ export default function WalletButton() {
   }
 
   return (
-    <div className="flex flex-col items-end gap-0.5">
+    <div className="flex flex-col items-center gap-0.5">
       <button
         onClick={() => disconnect()}
         title={formatPubkey(publicKey)}
@@ -103,11 +103,16 @@ export default function WalletButton() {
         </span>
         {handle ?? '…'}
       </button>
-      {isTokenConfigured && (
-        <span className="text-[10px] sm:text-xs font-mono text-slate-700 dark:text-slate-300">
-          Balance: {balance === null ? '…' : `${formatBalance(balance)} $PEPETIDE`}
+      <span className="text-[10px] sm:text-xs font-mono text-slate-700 dark:text-slate-300 text-center">
+        Balance:{' '}
+        <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+          {!isTokenConfigured
+            ? '0 $PEPETIDE'
+            : balance === null
+              ? '…'
+              : `${formatBalance(balance)} $PEPETIDE`}
         </span>
-      )}
+      </span>
     </div>
   );
 }
