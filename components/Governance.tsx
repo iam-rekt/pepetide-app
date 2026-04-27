@@ -93,17 +93,12 @@ export default function Governance() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl border border-emerald-300/40 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-transparent to-lime-500/10 backdrop-blur-md p-6 sm:p-10"
+        className="relative overflow-hidden rounded-3xl border border-emerald-300/40 dark:border-emerald-500/30 bg-gradient-to-br from-emerald-500/15 via-transparent to-lime-500/10 backdrop-blur-md p-6 sm:p-10 shadow-lg"
       >
-        <div className="flex items-center gap-3 mb-3">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            v2
-          </span>
-          <span className="text-xs font-mono text-slate-800 dark:text-slate-300 font-semibold">
-            
-          </span>
-        </div>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-400/40 mb-3">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          v2
+        </span>
         <h1 className="text-3xl sm:text-5xl font-black tracking-tight bg-gradient-to-br from-emerald-400 via-green-500 to-lime-500 bg-clip-text text-transparent mb-2">
           Governance
         </h1>
@@ -131,7 +126,7 @@ export default function Governance() {
           return (
             <div
               key={stat.label}
-              className="p-4 bg-white/5 dark:bg-slate-900/5 backdrop-blur-sm rounded-xl border border-white/20 dark:border-slate-600/30"
+              className="p-4 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md rounded-xl border border-white/30 dark:border-slate-700/40 shadow-sm hover:border-emerald-300/40 transition-colors"
             >
               <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${stat.gradient} mb-2 shadow-md ring-1 ring-white/30 dark:ring-white/10 backdrop-blur-sm opacity-75`}>
                 <Icon className="w-4 h-4 text-white" />
@@ -149,7 +144,7 @@ export default function Governance() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className="border-white/20 dark:border-slate-700/30 bg-white/10 dark:bg-slate-900/20 backdrop-blur-md">
+        <Card className="border-white/30 dark:border-slate-700/40 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <DropletIcon className="w-5 h-5 text-emerald-500" />
@@ -188,55 +183,58 @@ export default function Governance() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
       >
-        <div className="mb-4">
-          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
-            <ScrollIcon className="w-5 h-5 text-emerald-500" />
-            Proposals
-          </h2>
-          <p className="mt-1 text-sm text-slate-800 dark:text-slate-200 font-medium">
-            Queued proposals that go live the moment voting opens.
-          </p>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
+              <ScrollIcon className="w-5 h-5 text-emerald-500" />
+              Proposals
+            </h2>
+            <p className="mt-1 text-sm text-slate-800 dark:text-slate-200 font-medium">
+              Queued proposals that go live the moment voting opens.
+            </p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-400/40">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            voting opens at token launch
+          </span>
         </div>
         <div className="space-y-3">
           {PROPOSALS.map((p) => (
             <div
               key={p.id}
-              className="rounded-xl border border-white/15 dark:border-slate-700/40 bg-white/10 dark:bg-slate-900/20 backdrop-blur-sm p-4 sm:p-5 hover:border-emerald-300/40 dark:hover:border-emerald-500/30 transition-colors"
+              className="rounded-xl border border-white/30 dark:border-slate-700/40 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md shadow-sm p-4 sm:p-5 hover:border-emerald-300/60 dark:hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/10 transition-all"
             >
               <div className="flex flex-wrap items-center gap-2 mb-2">
-                <span className="text-[10px] font-mono font-bold text-slate-500 dark:text-slate-400 tracking-wider">
+                <span className="text-[10px] font-mono font-bold text-emerald-700 dark:text-emerald-400 tracking-wider px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-400/30">
                   {p.id}
                 </span>
                 <span
-                  className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full ${p.status === 'open'
-                      ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                      : p.status === 'queued'
-                        ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                        : 'bg-slate-500/20 text-slate-700 dark:text-slate-300'
+                  className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border ${p.status === 'open'
+                    ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-400/40'
+                    : p.status === 'queued'
+                      ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-400/40'
+                      : 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-400/40'
                     }`}
                 >
                   {p.status}
-                </span>
-                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 ml-auto">
-                  {p.endsIn}
                 </span>
               </div>
               <h3 className="font-semibold text-base sm:text-lg mb-1 text-slate-900 dark:text-slate-100">
                 {p.title}
               </h3>
-              <p className="text-sm text-slate-800 dark:text-slate-200 mb-3">{p.summary}</p>
+              <p className="text-sm text-slate-800 dark:text-slate-200 mb-3 leading-relaxed">{p.summary}</p>
               <div className="flex gap-2">
                 <button
                   disabled
-                  className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 dark:border-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-300/40 dark:border-emerald-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Vote Yes ({p.yes})
+                  Vote Yes · {p.yes}
                 </button>
                 <button
                   disabled
-                  className="flex-1 px-3 py-2 rounded-lg text-sm font-medium bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-300/40 dark:border-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="flex-1 px-3 py-2 rounded-lg text-sm font-semibold bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-300/40 dark:border-rose-500/30 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Vote No ({p.no})
+                  Vote No · {p.no}
                 </button>
               </div>
             </div>
@@ -251,24 +249,24 @@ export default function Governance() {
         transition={{ delay: 0.2 }}
       >
         <div className="mb-4">
-          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
             <GearIcon className="w-5 h-5 text-emerald-500" />
             How it works
           </h2>
           <p className="mt-1 text-sm text-slate-800 dark:text-slate-200 font-medium">
-            Four pillars. Optional, anonymous, holder-controlled.
+            Five pillars. Optional, anonymous, holder-controlled.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {PILLARS.map((pillar) => {
             const Icon = pillar.icon;
             return (
               <div
                 key={pillar.title}
-                className="rounded-xl border border-white/15 dark:border-slate-700/40 bg-white/10 dark:bg-slate-900/20 backdrop-blur-sm p-5"
+                className="rounded-xl border border-white/30 dark:border-slate-700/40 bg-white/60 dark:bg-slate-900/40 backdrop-blur-md shadow-sm p-5 hover:border-emerald-300/60 dark:hover:border-emerald-500/40 hover:shadow-md hover:shadow-emerald-500/10 transition-all"
               >
                 <div className="flex items-start gap-3">
-                  <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-lime-500 shadow-md shadow-emerald-500/30 ring-1 ring-white/30 dark:ring-white/10 backdrop-blur-sm opacity-75">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-emerald-500 to-lime-500 shadow-md shadow-emerald-500/30 ring-1 ring-white/30 dark:ring-white/10 backdrop-blur-sm opacity-75 shrink-0">
                     <Icon className="w-4 h-4 text-white" />
                   </div>
                   <div>
@@ -293,10 +291,13 @@ export default function Governance() {
         transition={{ delay: 0.25 }}
       >
         <div className="mb-4">
-          <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900 dark:text-slate-100">
+          <h2 className="flex items-center gap-2 text-2xl font-bold text-slate-900 dark:text-slate-100">
             <TrendIcon className="w-5 h-5 text-emerald-500" />
             Roadmap
           </h2>
+          <p className="mt-1 text-sm text-slate-800 dark:text-slate-200 font-medium">
+            What's built, what's next, what compounds for holders over time.
+          </p>
         </div>
         <div className="space-y-2 rounded-2xl border border-white/20 dark:border-slate-700/40 bg-white/40 dark:bg-slate-900/50 backdrop-blur-md p-3 shadow-lg">
           {[
