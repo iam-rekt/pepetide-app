@@ -301,7 +301,7 @@ export default function Governance() {
         <div className="space-y-2 rounded-2xl border border-white/20 dark:border-slate-700/40 bg-white/40 dark:bg-slate-900/50 backdrop-blur-md p-3 shadow-lg">
           {[
             { phase: 'v1', body: 'Wallet connect + Peptard handle. Anonymous Threads. Per-section UI.' },
-            { phase: 'v1.5', body: 'Read-only token balance display. Governance roadmap (this page).' },
+            { phase: 'v1.5', body: 'Activating governance — token balance display, proposals queue, treasury page.' },
             { phase: 'v2', body: 'Hold-gated handles, weighted upvotes, snapshot governance, treasury page.' },
             { phase: 'v2.5', body: 'Stake-to-boost threads, custody multisig, on-chain proposals via Realms.' },
             { phase: 'v3', body: 'Buybacks & burn — protocol revenue used to buy $PEPETIDE off the market and burn it, tightening supply for holders.' },
