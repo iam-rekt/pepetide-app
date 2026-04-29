@@ -20,7 +20,7 @@ import { startMissedDoseChecker } from '@/lib/notifications';
 import type { ViewMode } from '@/types';
 
 const HOME_BG_DESKTOP = '/imagesnew/pepetide xyz home.webp';
-const HOME_BG_MOBILE = '/imagesnew/pepetide xyz home mobile.webp';
+const HOME_BG_MOBILE = '/imagesnew/Pepetide xyz home mobile.webp';
 
 const backgroundByView: Partial<Record<ViewMode, { desktop: string; mobile: string }>> = {
   dashboard: { desktop: HOME_BG_DESKTOP, mobile: HOME_BG_MOBILE },
