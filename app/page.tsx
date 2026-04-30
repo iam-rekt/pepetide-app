@@ -13,7 +13,7 @@ import Settings from '@/components/Settings';
 import Navigation from '@/components/Navigation';
 import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import Governance from '@/components/Governance';
-import { PepetideMark, ScrollIcon } from '@/components/icons';
+import { PepetideMark } from '@/components/icons';
 import ScrambleText from '@/components/ScrambleText';
 import WalletButton from '@/components/WalletButton';
 import { startMissedDoseChecker } from '@/lib/notifications';
@@ -169,17 +169,7 @@ export default function Home() {
                 PEPEtide
               </h1>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              <a
-                href="https://docs.pepetide.xyz/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full border border-emerald-300/50 bg-white/70 px-3 py-2 text-xs font-semibold text-emerald-800 shadow-sm backdrop-blur-md transition-all hover:border-emerald-400 hover:bg-white/90 dark:border-emerald-500/30 dark:bg-slate-900/60 dark:text-emerald-200 dark:hover:border-emerald-400/60"
-                aria-label="Open PEPEtide documentation"
-              >
-                <ScrollIcon className="w-4 h-4" />
-                <span className="hidden sm:inline">Docs</span>
-              </a>
+            <div className="ml-auto">
               <WalletButton />
             </div>
             <p className="flex items-center gap-2 text-[11px] sm:text-xs font-mono tracking-tight text-slate-700 dark:text-slate-300 max-w-full">
