@@ -80,11 +80,15 @@ export default function CommunityBrowser({ onSelectPeptide, onSubmitNew, onDatab
 
   return (
     <div className="space-y-6">
-      {/* Bloodwork → personalized peptide ranking. Local-only storage. */}
-      <BloodworkPanel
-        catalogPeptides={peptides.map((p) => p.name)}
-        onSelectRecommended={handleSelectRecommended}
-      />
+      {/* Bloodwork → personalized peptide ranking. Hidden for now until the
+          peptide → marker mapping has a credible data source. Re-enable by
+          uncommenting the panel below. */}
+      {false && (
+        <BloodworkPanel
+          catalogPeptides={peptides.map((p) => p.name)}
+          onSelectRecommended={handleSelectRecommended}
+        />
+      )}
 
       {/* Header */}
       <Card>
