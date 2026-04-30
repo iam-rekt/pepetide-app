@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, isDatabaseConfigured } from '@/lib/db-postgres';
 import { hashIP } from '@/lib/hash';
+import { getWalletTokenIdentity } from '@/lib/server-token';
 
 // GET - Get user's vote for a thread
 export async function GET(
@@ -14,9 +15,12 @@ export async function GET(
   try {
     const { id } = await params;
 
-    // Get user identifier (hash IP for privacy)
+    const walletAddress = request.nextUrl.searchParams.get('walletAddress') || undefined;
+    const walletIdentity = await getWalletTokenIdentity(walletAddress);
+
+    // Prefer wallet identity for holder voting; fall back to hashed IP for anon votes.
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const userIdentifier = await hashIP(ip);
+    const userIdentifier = walletIdentity?.walletHash ?? await hashIP(ip);
 
     const vote = await prisma.forumVote.findFirst({
       where: {
@@ -51,7 +55,7 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { voteType } = body;
+    const { voteType, walletAddress } = body;
 
     if (!voteType || !['upvote', 'downvote'].includes(voteType)) {
       return NextResponse.json(
@@ -60,9 +64,12 @@ export async function POST(
       );
     }
 
-    // Get user identifier (hash IP for privacy)
+    const walletIdentity = await getWalletTokenIdentity(walletAddress);
+    const voteWeight = walletIdentity?.voteWeight ?? 1;
+
+    // Prefer wallet identity for holder voting; fall back to hashed IP for anon votes.
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
-    const userIdentifier = await hashIP(ip);
+    const userIdentifier = walletIdentity?.walletHash ?? await hashIP(ip);
 
     // Check for existing vote
     const existingVote = await prisma.forumVote.findFirst({
@@ -76,6 +83,8 @@ export async function POST(
     let thread;
 
     if (existingVote) {
+      const existingWeight = existingVote.voteWeight || 1;
+
       if (existingVote.voteType === voteType) {
         // Remove vote (toggle off)
         await prisma.$transaction([
@@ -85,7 +94,7 @@ export async function POST(
           prisma.forumThread.update({
             where: { id },
             data: {
-              [voteType === 'upvote' ? 'upvotes' : 'downvotes']: { decrement: 1 }
+              [voteType === 'upvote' ? 'upvotes' : 'downvotes']: { decrement: existingWeight }
             }
           })
         ]);
@@ -94,20 +103,29 @@ export async function POST(
         return NextResponse.json({
           upvotes: thread?.upvotes || 0,
           downvotes: thread?.downvotes || 0,
-          userVote: null
+          userVote: null,
+          voteWeight
         });
       } else {
         // Change vote
         await prisma.$transaction([
           prisma.forumVote.update({
             where: { id: existingVote.id },
-            data: { voteType }
+            data: {
+              voteType,
+              voteWeight,
+              voterWalletHash: walletIdentity?.walletHash
+            }
           }),
           prisma.forumThread.update({
             where: { id },
             data: {
-              upvotes: { [voteType === 'upvote' ? 'increment' : 'decrement']: 1 },
-              downvotes: { [voteType === 'downvote' ? 'increment' : 'decrement']: 1 }
+              upvotes: voteType === 'upvote'
+                ? { increment: voteWeight }
+                : { decrement: existingWeight },
+              downvotes: voteType === 'downvote'
+                ? { increment: voteWeight }
+                : { decrement: existingWeight }
             }
           })
         ]);
@@ -116,7 +134,8 @@ export async function POST(
         return NextResponse.json({
           upvotes: thread?.upvotes || 0,
           downvotes: thread?.downvotes || 0,
-          userVote: voteType
+          userVote: voteType,
+          voteWeight
         });
       }
     } else {
@@ -128,13 +147,15 @@ export async function POST(
             targetType: 'thread',
             userIdentifier,
             voteType,
+            voteWeight,
+            voterWalletHash: walletIdentity?.walletHash,
             threadId: id
           }
         }),
         prisma.forumThread.update({
           where: { id },
           data: {
-            [voteType === 'upvote' ? 'upvotes' : 'downvotes']: { increment: 1 }
+            [voteType === 'upvote' ? 'upvotes' : 'downvotes']: { increment: voteWeight }
           }
         })
       ]);
@@ -143,7 +164,8 @@ export async function POST(
       return NextResponse.json({
         upvotes: thread?.upvotes || 0,
         downvotes: thread?.downvotes || 0,
-        userVote: voteType
+        userVote: voteType,
+        voteWeight
       });
     }
   } catch (error) {

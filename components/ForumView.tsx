@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Plus, Search, TrendingUp, Clock, Tag, ArrowUp, ArrowDown, MessageSquare, Eye, Image as ImageIcon, Bookmark } from 'lucide-react';
 import type { ForumThread } from '@/types';
+import HolderBadge from '@/components/HolderBadge';
 import CreateThreadDialog from './CreateThreadDialog';
 import ThreadDetail from './ThreadDetail';
 import { consumePendingThreadOpen, hasPreparedThreadDraft, loadBookmarkedThreadIds, toggleBookmarkedThread } from '@/lib/community-storage';
@@ -245,7 +246,8 @@ export default function ForumView() {
                       >
                         <div className="line-clamp-1 font-medium text-slate-900 dark:text-white">{thread.title}</div>
                         <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          <span className="font-mono text-emerald-700 dark:text-emerald-400">{thread.authorUsername}</span> · {formatTimeAgo(thread.createdAt)}
+                          <span className="font-mono text-emerald-700 dark:text-emerald-400">{thread.authorUsername}</span>
+                          <HolderBadge tier={thread.authorHolderTier} balance={thread.authorTokenBalance} compact /> · {formatTimeAgo(thread.createdAt)}
                         </div>
                       </button>
                     ))}
@@ -276,7 +278,8 @@ export default function ForumView() {
                       >
                         <div className="line-clamp-1 font-medium text-slate-900 dark:text-white">{thread.title}</div>
                         <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                          <span className="font-mono text-emerald-700 dark:text-emerald-400">{thread.authorUsername}</span> · {formatTimeAgo(thread.updatedAt)}
+                          <span className="font-mono text-emerald-700 dark:text-emerald-400">{thread.authorUsername}</span>
+                          <HolderBadge tier={thread.authorHolderTier} balance={thread.authorTokenBalance} compact /> · {formatTimeAgo(thread.updatedAt)}
                         </div>
                       </button>
                     ))}
@@ -480,6 +483,7 @@ export default function ForumView() {
                           <span className="font-mono font-medium text-emerald-700 dark:text-emerald-400">
                             {thread.authorUsername}
                           </span>
+                          <HolderBadge tier={thread.authorHolderTier} balance={thread.authorTokenBalance} />
                           <span>{formatTimeAgo(thread.createdAt)}</span>
                           <span className="flex items-center gap-1">
                             <MessageSquare className="w-3 h-3" />

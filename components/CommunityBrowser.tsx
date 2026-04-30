@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, ThumbsUp, ThumbsDown, Users, Eye, TrendingUp } from 'lucide-react';
 import type { CommunityPeptide } from './CommunityView';
+import BloodworkPanel from './BloodworkPanel';
 
 interface CommunityBrowserProps {
   onSelectPeptide: (peptide: CommunityPeptide) => void;
@@ -68,8 +69,23 @@ export default function CommunityBrowser({ onSelectPeptide, onSubmitNew, onDatab
     }
   };
 
+  const handleSelectRecommended = (name: string) => {
+    const match = peptides.find((p) => p.name.toLowerCase() === name.toLowerCase());
+    if (match) {
+      onSelectPeptide(match);
+    } else {
+      setSearch(name);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Bloodwork → personalized peptide ranking. Local-only storage. */}
+      <BloodworkPanel
+        catalogPeptides={peptides.map((p) => p.name)}
+        onSelectRecommended={handleSelectRecommended}
+      />
+
       {/* Header */}
       <Card>
         <CardHeader>

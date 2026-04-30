@@ -138,25 +138,29 @@ model SyncedLog {
 }
 
 model ForumThread {
-  id             String      @id @default(cuid())
-  title          String
-  authorUsername String      @map("author_username")
-  authorId       String      @map("author_id")
-  content        String
-  imageUrls      String[]    @default([]) @map("image_urls")
-  stackPeptides  Json?       @map("stack_peptides")
-  tags           String[]    @default([])
-  upvotes        Int         @default(0)
-  downvotes      Int         @default(0)
-  replyCount     Int         @default(0) @map("reply_count")
-  viewCount      Int         @default(0) @map("view_count")
-  isPinned       Boolean     @default(false) @map("is_pinned")
-  isHidden       Boolean     @default(false) @map("is_hidden")
-  isLocked       Boolean     @default(false) @map("is_locked")
-  createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime    @updatedAt @map("updated_at")
-  posts          ForumPost[]
-  votes          ForumVote[]
+  id                 String      @id @default(cuid())
+  title              String
+  authorUsername     String      @map("author_username")
+  authorId           String      @map("author_id")
+  authorWalletHash   String?     @map("author_wallet_hash")
+  authorWalletHandle String?     @map("author_wallet_handle")
+  authorHolderTier   String?     @map("author_holder_tier")
+  authorTokenBalance Float?      @map("author_token_balance")
+  content            String
+  imageUrls          String[]    @default([]) @map("image_urls")
+  stackPeptides      Json?       @map("stack_peptides")
+  tags               String[]    @default([])
+  upvotes            Int         @default(0)
+  downvotes          Int         @default(0)
+  replyCount         Int         @default(0) @map("reply_count")
+  viewCount          Int         @default(0) @map("view_count")
+  isPinned           Boolean     @default(false) @map("is_pinned")
+  isHidden           Boolean     @default(false) @map("is_hidden")
+  isLocked           Boolean     @default(false) @map("is_locked")
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+  posts              ForumPost[]
+  votes              ForumVote[]
 
   @@index([createdAt])
   @@index([tags])
@@ -167,21 +171,25 @@ model ForumThread {
 }
 
 model ForumPost {
-  id             String      @id @default(cuid())
-  threadId       String      @map("thread_id")
-  authorUsername String      @map("author_username")
-  authorId       String      @map("author_id")
-  content        String
-  imageUrls      String[]    @default([]) @map("image_urls")
-  parentPostId   String?     @map("parent_post_id")
-  upvotes        Int         @default(0)
-  downvotes      Int         @default(0)
-  createdAt      DateTime    @default(now()) @map("created_at")
-  updatedAt      DateTime    @updatedAt @map("updated_at")
-  parentPost     ForumPost?  @relation("PostReplies", fields: [parentPostId], references: [id], onDelete: Cascade)
-  replies        ForumPost[] @relation("PostReplies")
-  thread         ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  votes          ForumVote[]
+  id                 String      @id @default(cuid())
+  threadId           String      @map("thread_id")
+  authorUsername     String      @map("author_username")
+  authorId           String      @map("author_id")
+  authorWalletHash   String?     @map("author_wallet_hash")
+  authorWalletHandle String?     @map("author_wallet_handle")
+  authorHolderTier   String?     @map("author_holder_tier")
+  authorTokenBalance Float?      @map("author_token_balance")
+  content            String
+  imageUrls          String[]    @default([]) @map("image_urls")
+  parentPostId       String?     @map("parent_post_id")
+  upvotes            Int         @default(0)
+  downvotes          Int         @default(0)
+  createdAt          DateTime    @default(now()) @map("created_at")
+  updatedAt          DateTime    @updatedAt @map("updated_at")
+  parentPost         ForumPost?  @relation("PostReplies", fields: [parentPostId], references: [id], onDelete: Cascade)
+  replies            ForumPost[] @relation("PostReplies")
+  thread             ForumThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  votes              ForumVote[]
 
   @@index([threadId])
   @@index([parentPostId])
@@ -190,16 +198,18 @@ model ForumPost {
 }
 
 model ForumVote {
-  id             String       @id @default(cuid())
-  targetId       String       @map("target_id")
-  targetType     String       @map("target_type")
-  userIdentifier String       @map("user_identifier")
-  voteType       String       @map("vote_type")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  threadId       String?      @map("thread_id")
-  postId         String?      @map("post_id")
-  post           ForumPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
-  thread         ForumThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  id              String       @id @default(cuid())
+  targetId        String       @map("target_id")
+  targetType      String       @map("target_type")
+  userIdentifier  String       @map("user_identifier")
+  voteType        String       @map("vote_type")
+  voteWeight      Int          @default(1) @map("vote_weight")
+  voterWalletHash String?      @map("voter_wallet_hash")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  threadId        String?      @map("thread_id")
+  postId          String?      @map("post_id")
+  post            ForumPost?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  thread          ForumThread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@unique([targetId, userIdentifier])
   @@index([targetId, targetType])

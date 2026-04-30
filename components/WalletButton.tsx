@@ -1,64 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useEffect } from 'react';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletModal } from '@solana/wallet-adapter-react-ui';
-import { PublicKey } from '@solana/web3.js';
-import { derivePeptardHandle, formatPubkey } from '@/lib/wallet';
-import { PEPETIDE_MINT, isTokenConfigured } from '@/lib/token';
+import { usePepetideBalance } from '@/hooks/use-pepetide-balance';
+import { formatTokenBalance } from '@/lib/holder';
+import { formatPubkey } from '@/lib/wallet';
 import { MoleculeIcon } from '@/components/icons';
 
-function formatBalance(n: number): string {
-  if (n === 0) return '0';
-  if (n < 0.01) return n.toExponential(2);
-  if (n < 1000) return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  if (n < 1_000_000) return `${(n / 1000).toFixed(1)}K`;
-  if (n < 1_000_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
-  return `${(n / 1_000_000_000).toFixed(2)}B`;
-}
-
 export default function WalletButton() {
-  const { publicKey, connected, disconnect, connecting, wallets, select, wallet, connect } = useWallet();
-  const { connection } = useConnection();
+  const { disconnect, connecting, wallets, select, wallet, connect } = useWallet();
   const { setVisible } = useWalletModal();
-  const [handle, setHandle] = useState<string | null>(null);
-  const [balance, setBalance] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!publicKey) {
-      setHandle(null);
-      return;
-    }
-    void derivePeptardHandle(publicKey as PublicKey).then(setHandle);
-  }, [publicKey]);
-
-  // Fetch $PEPETIDE token balance whenever the wallet connects or mint changes.
-  // No-op while PEPETIDE_MINT is unset (token not yet launched).
-  useEffect(() => {
-    if (!publicKey || !isTokenConfigured) {
-      setBalance(null);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const mint = new PublicKey(PEPETIDE_MINT);
-        const accounts = await connection.getParsedTokenAccountsByOwner(
-          publicKey as PublicKey,
-          { mint }
-        );
-        if (cancelled) return;
-        const ui = accounts.value[0]?.account.data.parsed.info.tokenAmount.uiAmount ?? 0;
-        setBalance(ui);
-      } catch (e) {
-        console.warn('[wallet] balance fetch failed', e);
-        if (!cancelled) setBalance(0);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [publicKey, connection]);
+  const { publicKey, connected, handle, balance, isTokenConfigured } = usePepetideBalance();
 
   // After we select a wallet, the adapter sets `wallet`. Connect to it.
   useEffect(() => {
@@ -110,7 +63,7 @@ export default function WalletButton() {
             ? '0 $PEPETIDE'
             : balance === null
               ? '…'
-              : `${formatBalance(balance)} $PEPETIDE`}
+              : `${formatTokenBalance(balance)} $PEPETIDE`}
         </span>
       </span>
     </div>

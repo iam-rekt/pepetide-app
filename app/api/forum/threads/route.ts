@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, isDatabaseConfigured } from '@/lib/db-postgres';
 import { hashIP } from '@/lib/hash';
+import { getWalletTokenIdentity } from '@/lib/server-token';
 
 // GET - Fetch all forum threads
 export async function GET(request: NextRequest) {
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { title, content, username, tags, stackPeptides, imageUrls } = body;
+    const { title, content, username, tags, stackPeptides, imageUrls, walletAddress } = body;
 
     if (!title || !content || !username) {
       return NextResponse.json(
@@ -52,6 +53,7 @@ export async function POST(request: NextRequest) {
     // Get user identifier (hash IP for privacy)
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const authorId = await hashIP(ip);
+    const walletIdentity = await getWalletTokenIdentity(walletAddress);
 
     const newThread = await prisma.forumThread.create({
       data: {
@@ -59,6 +61,10 @@ export async function POST(request: NextRequest) {
         content,
         authorUsername: username,
         authorId,
+        authorWalletHash: walletIdentity?.walletHash,
+        authorWalletHandle: walletIdentity?.handle,
+        authorHolderTier: walletIdentity?.holderTier,
+        authorTokenBalance: walletIdentity?.balance,
         tags: tags || [],
         stackPeptides: stackPeptides || null,
         imageUrls: imageUrls || []

@@ -106,6 +106,10 @@ export interface ForumThread {
   title: string;
   authorUsername: string;
   authorId: string; // hashed IP or user identifier
+  authorWalletHash?: string | null;
+  authorWalletHandle?: string | null;
+  authorHolderTier?: string | null;
+  authorTokenBalance?: number | null;
   content: string;
   imageUrls?: string[];
   stackPeptides?: StackPeptideInfo[]; // peptides in the shared stack
@@ -138,6 +142,10 @@ export interface ForumPost {
   threadId: string;
   authorUsername: string;
   authorId: string;
+  authorWalletHash?: string | null;
+  authorWalletHandle?: string | null;
+  authorHolderTier?: string | null;
+  authorTokenBalance?: number | null;
   content: string;
   imageUrls?: string[];
   parentPostId?: string; // for nested replies
@@ -154,5 +162,7 @@ export interface ForumVote {
   targetType: 'thread' | 'post';
   userIdentifier: string;
   voteType: 'upvote' | 'downvote';
+  voteWeight?: number;
+  voterWalletHash?: string | null;
   createdAt: Date;
 }

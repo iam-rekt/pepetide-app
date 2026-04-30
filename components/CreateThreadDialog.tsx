@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { X, Plus, Upload } from 'lucide-react';
 import type { ForumThread, StackPeptideInfo, DoseProtocol } from '@/types';
+import { usePepetideBalance } from '@/hooks/use-pepetide-balance';
+import { formatTokenBalance } from '@/lib/holder';
 import { getProtocols } from '@/lib/db';
 import {
   clearThreadComposerDraft,
@@ -24,9 +26,11 @@ interface CreateThreadDialogProps {
 }
 
 export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateThreadDialogProps) {
+  const { publicKey, connected, handle, balance, tier, voteWeight, isTokenConfigured } = usePepetideBalance();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [username, setUsername] = useState('');
+  const [useWalletIdentity, setUseWalletIdentity] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [stackPeptides, setStackPeptides] = useState<StackPeptideInfo[]>([]);
   const [sourceLabel, setSourceLabel] = useState('');
@@ -70,6 +74,12 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
       saveCommunityAlias(username);
     }
   }, [username]);
+
+  useEffect(() => {
+    if (useWalletIdentity && handle) {
+      setUsername(handle);
+    }
+  }, [useWalletIdentity, handle]);
 
   const loadMyProtocols = async () => {
     const protocols = await getProtocols();
@@ -188,7 +198,8 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
           username,
           tags: selectedTags,
           stackPeptides: stackPeptides.length > 0 ? stackPeptides : undefined,
-          imageUrls: imageUrls.length > 0 ? imageUrls : undefined
+          imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+          walletAddress: useWalletIdentity && publicKey ? publicKey.toBase58() : undefined
         })
       });
 
@@ -335,10 +346,27 @@ export default function CreateThreadDialog({ onClose, onThreadCreated }: CreateT
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Your pseudonym..."
               className="mt-1"
+              disabled={useWalletIdentity}
             />
             <p className="text-xs text-slate-500 mt-1">
               Use any alias you want. Your alias and thread draft are only saved locally on this device.
             </p>
+            {connected && isTokenConfigured && (
+              <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-lg border border-emerald-300/40 bg-emerald-50/50 p-3 text-xs text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-100">
+                <input
+                  type="checkbox"
+                  checked={useWalletIdentity}
+                  onChange={(e) => setUseWalletIdentity(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-semibold">Post with holder badge</span>
+                  <span className="block opacity-80">
+                    {handle ?? 'Connected wallet'} · {formatTokenBalance(balance)} $PEPETIDE · {tier.label} · {voteWeight}x thread vote weight.
+                  </span>
+                </span>
+              </label>
+            )}
           </div>
 
           {/* Title */}

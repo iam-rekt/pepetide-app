@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, ArrowUp, ArrowDown, MessageSquare, Download, Image as ImageIcon, Trash2, Bookmark, Shield, Pin, PinOff, Eye, EyeOff, Lock, Unlock } from 'lucide-react';
 import type { ForumThread, ForumPost } from '@/types';
+import HolderBadge from '@/components/HolderBadge';
+import { usePepetideBalance } from '@/hooks/use-pepetide-balance';
+import { formatTokenBalance } from '@/lib/holder';
 import { addPeptide } from '@/lib/db';
 import {
   clearReplyComposerDraft,
@@ -83,12 +86,14 @@ interface ThreadDetailProps {
 type PostWithChildren = ForumPost & { children: PostWithChildren[] };
 
 export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
+  const { publicKey, connected, handle, balance, tier, voteWeight, isTokenConfigured } = usePepetideBalance();
   const [threadState, setThreadState] = useState(thread);
   const [posts, setPosts] = useState<ForumPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [forumConfigured, setForumConfigured] = useState(true);
   const [replyContent, setReplyContent] = useState('');
   const [replyUsername, setReplyUsername] = useState('');
+  const [useWalletIdentity, setUseWalletIdentity] = useState(false);
   const [replyToPostId, setReplyToPostId] = useState<string | null>(null);
   const [threadVotes, setThreadVotes] = useState({ up: thread.upvotes, down: thread.downvotes });
   const [userVote, setUserVote] = useState<'upvote' | 'downvote' | null>(null);
@@ -134,7 +139,8 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
 
   const loadUserVote = useCallback(async () => {
     try {
-      const response = await fetch(`/api/forum/threads/${thread.id}/vote`);
+      const walletQuery = publicKey ? `?walletAddress=${encodeURIComponent(publicKey.toBase58())}` : '';
+      const response = await fetch(`/api/forum/threads/${thread.id}/vote${walletQuery}`);
       if (response.ok) {
         const data = await response.json();
         if (data.configured === false) {
@@ -146,7 +152,7 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
     } catch (error) {
       console.error('Failed to load user vote:', error);
     }
-  }, [thread.id]);
+  }, [thread.id, publicKey]);
 
   useEffect(() => {
     const savedDraft = loadReplyComposerDraft(thread.id);
@@ -183,12 +189,21 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
     }
   }, [replyUsername]);
 
+  useEffect(() => {
+    if (useWalletIdentity && handle) {
+      setReplyUsername(handle);
+    }
+  }, [useWalletIdentity, handle]);
+
   const handleVote = async (voteType: 'upvote' | 'downvote') => {
     try {
       const response = await fetch(`/api/forum/threads/${thread.id}/vote`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ voteType })
+        body: JSON.stringify({
+          voteType,
+          walletAddress: publicKey ? publicKey.toBase58() : undefined
+        })
       });
 
       if (response.ok) {
@@ -319,7 +334,8 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
           content: replyContent,
           username: replyUsername,
           parentPostId: replyToPostId,
-          imageUrls: imageUrls.length > 0 ? imageUrls : undefined
+          imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+          walletAddress: useWalletIdentity && publicKey ? publicKey.toBase58() : undefined
         })
       });
 
@@ -499,6 +515,11 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
                 <span className="font-medium text-slate-700 dark:text-slate-300">
                   {post.authorUsername}
                 </span>
+                <HolderBadge
+                  tier={post.authorHolderTier}
+                  balance={post.authorTokenBalance}
+                  compact
+                />
                 <span>{formatTimeAgo(post.createdAt)}</span>
               </div>
 
@@ -583,6 +604,9 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
                 : 'text-slate-500'
               }`}>
               {threadVotes.up - threadVotes.down}
+            </span>
+            <span className="text-[10px] uppercase tracking-wide text-slate-400">
+              {voteWeight}x
             </span>
             <button
               onClick={() => handleVote('downvote')}
@@ -682,6 +706,11 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
               <span className="font-medium text-slate-700 dark:text-slate-300">
                 {threadState.authorUsername}
               </span>
+              <HolderBadge
+                tier={threadState.authorHolderTier}
+                balance={threadState.authorTokenBalance}
+                voteWeight={threadState.authorHolderTier ? undefined : null}
+              />
               <span>{formatTimeAgo(threadState.createdAt)}</span>
               <span>{threadReplyCount} replies</span>
               <span>{threadState.viewCount} views</span>
@@ -802,10 +831,27 @@ export default function ThreadDetail({ thread, onBack }: ThreadDetailProps) {
               onChange={(e) => setReplyUsername(e.target.value)}
               placeholder="Your alias..."
               className="mt-1"
+              disabled={useWalletIdentity}
             />
             <p className="mt-1 text-xs text-slate-500">
               Your alias and reply draft stay saved only on this device.
             </p>
+            {connected && isTokenConfigured && (
+              <label className="mt-3 flex cursor-pointer items-start gap-2 rounded-lg border border-emerald-300/40 bg-emerald-50/50 p-3 text-xs text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-100">
+                <input
+                  type="checkbox"
+                  checked={useWalletIdentity}
+                  onChange={(e) => setUseWalletIdentity(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="block font-semibold">Reply with holder badge</span>
+                  <span className="block opacity-80">
+                    {handle ?? 'Connected wallet'} · {formatTokenBalance(balance)} $PEPETIDE · {tier.label} · {voteWeight}x thread vote weight.
+                  </span>
+                </span>
+              </label>
+            )}
           </div>
           {replyTarget && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-700 dark:bg-slate-900/50">

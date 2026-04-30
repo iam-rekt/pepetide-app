@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   MoleculeIcon,
@@ -13,6 +12,8 @@ import {
   DropletIcon,
   ChatIcon,
 } from '@/components/icons';
+import { usePepetideBalance } from '@/hooks/use-pepetide-balance';
+import { formatTokenBalance } from '@/lib/holder';
 import { isTokenConfigured } from '@/lib/token';
 
 const PROPOSALS: {
@@ -85,7 +86,8 @@ const PILLARS = [
 ];
 
 export default function Governance() {
-  const { connected } = useWallet();
+  const { connected, balance, loading, tier, voteWeight } = usePepetideBalance();
+  const votingBalance = balance ?? 0;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -163,13 +165,15 @@ export default function Governance() {
             ) : (
               <div className="flex flex-wrap items-baseline gap-3">
                 <span className="text-4xl font-black bg-gradient-to-br from-emerald-400 to-lime-500 bg-clip-text text-transparent">
-                  0
+                  {loading ? '…' : formatTokenBalance(votingBalance)}
                 </span>
                 <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
                   $PEPETIDE
                 </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200/60 dark:bg-slate-700/60 text-slate-600 dark:text-slate-300">
-                  token not yet live
+                  {isTokenConfigured
+                    ? `${tier.label} tier · ${voteWeight}x thread vote`
+                    : 'token not yet live'}
                 </span>
               </div>
             )}
@@ -296,7 +300,7 @@ export default function Governance() {
             Roadmap
           </h2>
           <p className="mt-1 text-sm text-slate-800 dark:text-slate-200 font-medium">
-            What's built, what's next, what compounds for holders over time.
+            What is built, what is next, what compounds for holders over time.
           </p>
         </div>
         <div className="space-y-2 rounded-2xl border border-white/20 dark:border-slate-700/40 bg-white/40 dark:bg-slate-900/50 backdrop-blur-md p-3 shadow-lg">

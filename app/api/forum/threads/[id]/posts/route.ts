@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma, isDatabaseConfigured } from '@/lib/db-postgres';
 import { hashIP } from '@/lib/hash';
+import { getWalletTokenIdentity } from '@/lib/server-token';
 
 // GET - Fetch all posts for a thread
 export async function GET(
@@ -64,7 +65,7 @@ export async function POST(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { content, username, parentPostId, imageUrls } = body;
+    const { content, username, parentPostId, imageUrls, walletAddress } = body;
 
     if (!content || !username) {
       return NextResponse.json(
@@ -76,6 +77,7 @@ export async function POST(
     // Get user identifier (hash IP for privacy)
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
     const authorId = await hashIP(ip);
+    const walletIdentity = await getWalletTokenIdentity(walletAddress);
 
     const thread = await prisma.forumThread.findUnique({
       where: { id },
@@ -109,6 +111,10 @@ export async function POST(
         content,
         authorUsername: username,
         authorId,
+        authorWalletHash: walletIdentity?.walletHash,
+        authorWalletHandle: walletIdentity?.handle,
+        authorHolderTier: walletIdentity?.holderTier,
+        authorTokenBalance: walletIdentity?.balance,
         parentPostId: parentPostId || null,
         imageUrls: imageUrls || []
       }
